@@ -88,8 +88,7 @@ var daoMSSQL = /** @class */ (function (_super) {
                         return [3 /*break*/, 5];
                     case 4:
                         error_1 = _a.sent();
-                        this.lastErrors.push(error_1);
-                        console.log(error_1);
+                        this.server.lastErrors.push(error_1);
                         return [3 /*break*/, 5];
                     case 5: return [2 /*return*/];
                 }

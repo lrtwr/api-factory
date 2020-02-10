@@ -12,7 +12,6 @@ var abstracts;
     var AbstractDaoSupport = /** @class */ (function () {
         function AbstractDaoSupport() {
             var _this = this;
-            this.lastErrors = [];
             this.GetTableNames = function () {
                 if (!_this.tableProperties.db.table_type)
                     return [];

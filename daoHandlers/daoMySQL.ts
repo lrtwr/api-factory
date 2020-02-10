@@ -25,7 +25,7 @@ export class daoMySQL extends factory.abstracts.AbstractDaoSupport {
     this.db = db;
     db.connect(error => {
       if (error) {
-        this.lastErrors.push(error);
+        this.server.lastErrors.push(error);
         throw error;
       }
       var sql = ApiSQLStatements.GetMySQLTableColumnInfoStatement(
@@ -33,7 +33,7 @@ export class daoMySQL extends factory.abstracts.AbstractDaoSupport {
       );
       db.query(sql, (error, result) => {
         if (error) {
-          this.lastErrors.push(error);
+          this.server.lastErrors.push(error);
           throw error;
         }
         self.tableProperties = new factory.jl.jsonDatabase(result, [

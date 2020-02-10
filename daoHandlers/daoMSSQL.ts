@@ -1,10 +1,11 @@
+import { ApiServer } from './../ApiServer';
 const mssql = require("mssql");
 import { ApiSQLStatements } from "../setup/ApiSQLStatements";
 import { factory } from "../setup/factory";
 
 export class daoMSSQL extends factory.abstracts.AbstractDaoSupport {
   constructor(
-    private server: any,
+    private server: ApiServer,
     private config: any,
     private status: factory.RunningStatus,
     private callback?: { (server): void }
@@ -28,8 +29,9 @@ export class daoMSSQL extends factory.abstracts.AbstractDaoSupport {
         this.status.DbConnect = factory.enums.enumRunningStatus.DbConnectConnected;
         this.callback(this.server);
       } catch (error) {
-        this.lastErrors.push(error);
-        console.log(error);
+        this.server.lastErrors.push(error);
+
+
       }
     }
 

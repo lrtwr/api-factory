@@ -30,7 +30,7 @@ var daoSQLite = /** @class */ (function (_super) {
             if (error) {
                 self.status.DbConnect = factory_1.factory.enums.enumRunningStatus.DbConnectError;
                 console.log(error);
-                _this.lastErrors.push(error);
+                _this.server.lastErrors.push(error);
             }
         });
         self.status.DbConnect = factory_1.factory.enums.enumRunningStatus.DbConnectConnected;
@@ -38,7 +38,7 @@ var daoSQLite = /** @class */ (function (_super) {
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetSQLiteTableColumnInfoStatement();
         self.db.all(sql, function (error, result) {
             if (error) {
-                _this.lastErrors.push(error);
+                _this.server.lastErrors.push(error);
             }
             else {
                 self.tableProperties = new factory_1.factory.jl.jsonDatabase(result, ["table_name", "table_type"]);

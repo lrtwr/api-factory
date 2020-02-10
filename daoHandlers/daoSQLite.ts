@@ -18,7 +18,7 @@ export class daoSQLite extends factory.abstracts.AbstractDaoSupport {
       if (error) {
         self.status.DbConnect = factory.enums.enumRunningStatus.DbConnectError;
         console.log(error);
-        this.lastErrors.push(error);
+        this.server.lastErrors.push(error);
       }
     });
     self.status.DbConnect = factory.enums.enumRunningStatus.DbConnectConnected;
@@ -26,11 +26,12 @@ export class daoSQLite extends factory.abstracts.AbstractDaoSupport {
     var sql = ApiSQLStatements.GetSQLiteTableColumnInfoStatement();
     self.db.all(sql, (error, result) => {
       if(error){
-        this.lastErrors.push(error);
+        this.server.lastErrors.push(error);
       }
       else{
       self.tableProperties = new factory.jl.jsonDatabase(result, ["table_name", "table_type"]);
       self.callback(self.server);
+      
       }
     });
   }

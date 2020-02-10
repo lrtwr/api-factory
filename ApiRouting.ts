@@ -10,21 +10,18 @@ export class ApiRouting {
   public server: ApiServer;
   public app: Express;
 
-  constructor(config: factory.Configuration, callback?: { (server): void }) {
+  constructor(private config: factory.Configuration, callback?: { (server): void }) {
     this.server = new ApiServer(config);
     this.app = this.server.app;
-    if (!callback) callback = (server) => {
-      server.AllTablesApis();
-      server.FinalizeRouting();
-    };
-    this.app.use(this.jsonErrorHandler);
-    this.handler = ApiFactoryHandler.GetDbApiHandler(this, config, this.server.status, callback);
-  }
+    const self = this;
 
-  jsonErrorHandler = async (error, request, response, next) => {
-    console.log(error);
-    this.handler.Error(error, request, response)
-  }
+      if (!callback) callback = (server) => {
+        server.AllTablesApis();
+        server.FinalizeRouting();
+      };
+      this.handler = ApiFactoryHandler.GetDbApiHandler(this, config, this.server.status, callback);
+    }
+
   FinalizeRouting() {
     this.app.use(`*`, (req, res) =>
       this.handler.Error({
@@ -38,6 +35,7 @@ export class ApiRouting {
       }, req, res)
     );
   }
+  
   AllTablesApis() {
     const deze = this;
     const tableNames: string[] = this.handler.dao.GetTableNames();
@@ -51,13 +49,13 @@ export class ApiRouting {
   }
 
   TableApis(tableName, route?) {
+    this.ReadTableApis(tableName, route);
     this.Post(tableName, route);
     this.Put(tableName, route);
     this.PutId(tableName, route);
     this.PatchId(tableName, route);
     this.DeleteId(tableName, route);
-    this.ReadTableApis(tableName, route);
-  }
+   }
 
   ReadTableApis(tableName, route?) {
     this.Count(tableName, route);

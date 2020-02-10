@@ -1,21 +1,19 @@
+import { ApiServer } from './../ApiServer';
 
 import { factory } from "../setup/factory";
 import { MongoClient, ObjectID } from "mongodb";
 
 export class daoMongoDB extends factory.abstracts.AbstractDaoSupport {
   mongoCollectionNames: string[] = [];
+  mongoViewNames: string[] = [];
   constructor(
-    private server: any,
+    private server: ApiServer,
     private config: any,
     private status: factory.RunningStatus,
     private callback?: { (server): void }
   ) {
     super();
     status.DbConnect = factory.enums.enumRunningStatus.DbConnectInitializing;
-    this.AsyncConnect();
-  }
-
-  public async AsyncConnect() {
     const self = this;
     MongoClient.connect(
       self.config.connectionString,
@@ -29,15 +27,18 @@ export class daoMongoDB extends factory.abstracts.AbstractDaoSupport {
         self.status.DbConnect = factory.enums.enumRunningStatus.DbConnectConnected;
         console.log("Connected to MongoDb: `" + self.config.database + "`!");
         self.db.listCollections().toArray((error, colInfo) => {
-          if(error)self.lastErrors.push(error);
+          if (error) self.server.lastErrors.push(error);
           colInfo.forEach(column => {
             if (column.type == "collection") {
               self.mongoCollectionNames.push(column.name);
             }
+            if (column.type == "view") {
+              self.mongoViewNames.push(column.name);
+            }
           });
           self.callback(self.server);
         });
-       }
+      }
     );
   }
 
@@ -155,9 +156,9 @@ export class daoMongoDB extends factory.abstracts.AbstractDaoSupport {
 
   GetTableNames = (): string[] => {
     return this.mongoCollectionNames;
-      };
-    
-      GetViewNames =  (): string[] => {
-        return [];
-      };
+  };
+
+  GetViewNames = (): string[] => {
+    return this.mongoViewNames;
+  };
 }

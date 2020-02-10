@@ -24,9 +24,7 @@ import { jl } from "./jl";
       }
       public db: any;
       public tableProperties: jl.jsonDatabase;
-      public lastErrors: any[]=[];
-
-      public abstract AsyncPost(tableNameOrCollection, request): any;
+       public abstract AsyncPost(tableNameOrCollection, request): any;
       public abstract AsyncGet(tableNameOrCollection, request): any;
       public abstract AsyncGetId(tableNameOrCollection, request): any;
       public abstract AsyncExistId(tableNameOrCollection, request): any;

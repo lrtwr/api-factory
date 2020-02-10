@@ -1,4 +1,4 @@
-import { ApiRouting, factory } from "./ApiFactory";
+import { ApiRouting, factory } from "./ApiRouting";
 
 export module ApiFactory {
 
@@ -18,7 +18,6 @@ export module ApiFactory {
    cfg.listenPort = config.listenPort != null ? config.listenPort : 5000;
    return cfg;
  }
-
 
  export const CreateMySQLConfiguration = (config: {
    host: string;

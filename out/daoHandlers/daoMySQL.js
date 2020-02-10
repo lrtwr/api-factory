@@ -36,13 +36,13 @@ var daoMySQL = /** @class */ (function (_super) {
         _this.db = db;
         db.connect(function (error) {
             if (error) {
-                _this.lastErrors.push(error);
+                _this.server.lastErrors.push(error);
                 throw error;
             }
             var sql = ApiSQLStatements_1.ApiSQLStatements.GetMySQLTableColumnInfoStatement(_this.config.database);
             db.query(sql, function (error, result) {
                 if (error) {
-                    _this.lastErrors.push(error);
+                    _this.server.lastErrors.push(error);
                     throw error;
                 }
                 self.tableProperties = new factory_1.factory.jl.jsonDatabase(result, [

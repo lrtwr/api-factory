@@ -152,5 +152,6 @@ var configMongo3 = api.CreateMongoConfiguration({
 });
 //api.Connect(configMySQL);
 //api.Connect(configMSSQL);
-api.Connect(configMongo1);
+api.Connect(configSQLite);
+//api.Connect(configMongo1);
 //# sourceMappingURL=index.js.map

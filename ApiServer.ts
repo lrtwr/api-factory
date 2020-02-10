@@ -9,12 +9,15 @@ export class ApiServer {
   public app: any;
   public status: factory.RunningStatus;
   public routeList: any[]=[];
+  public lastErrors: any[]=[];
 
   constructor(private config: factory.Configuration) {
     console.log("Starting api server.");
+    const self = this;
     this.app = Express();
     this.app.use(BodyParser.json());
     this.app.use(BodyParser.urlencoded({ extended: true }));
+    this.app.use(this.jsonErrorHandler);
     //this.app.use(this.app.router); 
     this.status = new factory.RunningStatus(
       factory.enums.enumRunningStatus.Down,
@@ -34,16 +37,21 @@ export class ApiServer {
         );
         this.status.ApiServer = factory.enums.enumRunningStatus.ApiServerUp;
       })
-      .on("error", function(err) {
+      .on("error", function(error) {
+        self.lastErrors.push(error)
         console.log("foutje!!!!!!!!!!!!!!!!!");
-        if (err.errno === "EADDRINUSE") {
+        if (error.errno === "EADDRINUSE") {
           this.status.apiServer = factory.enums.enumRunningStatus.ApiServerError;
           console.log(`Port ${config.listenPort} is busy`);
         } else {
-          console.log(err);
+          console.log(error);
         }
       });
     this.Status();
+  }
+  jsonErrorHandler = async (error, request, response, next) => {
+    console.log(error);
+    this.lastErrors.push(error);
   }
 
   public AddRouteList(route: string, routeType: string, tableName: string){
@@ -57,6 +65,7 @@ export class ApiServer {
     const aJson = [];
     aJson.push(this.status);
     aJson.push(conf2);
+    aJson.push({"errors":this.lastErrors});
     aJson.push(this.routeList);
     response.json(aJson);
   }
@@ -72,4 +81,5 @@ export class ApiServer {
     }
     return route;
   }
+
 }
