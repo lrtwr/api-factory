@@ -152,24 +152,6 @@ const api = ApiFactory;
 //   port: 3306
 // });
 
-// api.CreateMongoConfiguration({
-//   connectionString:"mongodb+srv://JeroenLeertouwer:Mo%2328Jovibo@cluster0-1m6kn.azure.mongodb.net/test?authSource=admin&replicaSet=Cluster0-shard-0&w=majority&readPreference=primary&appname=MongoDB%20Compass%20Community&retryWrites=true&ssl=true",
-//   database: "AngSQL",
-//   listenPort: 6001
-// })
-
-// api.CreateMongoConfiguration({
-//   connectionString:"mongodb+srv://JeroenLeertouwer:Mo%2328Jovibo@cluster0-w2idf.gcp.mongodb.net/test?authSource=admin&replicaSet=Cluster0-shard-0&readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=true",
-//   database: "AngSQL",
-//   listenPort: 6002
-// })
-
-// api.CreateMongoConfiguration({
-//   connectionString:"mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false",
-//   database: "AngSQL",
-//   listenPort: 6003
-// })
-
 const configSQLite = api.CreateSQLiteConfiguration({
   connectionString:"Data Source=apisqlite.db;",
   listenPort: 6802,
@@ -195,6 +177,24 @@ const configMSSQL = api.CreateMSSQLConfiguration({
   server: "JAL"
 })
 
+const configMongo1 = api.CreateMongoConfiguration({
+  connectionString:"mongodb+srv://JeroenLeertouwer:Mo%2328Jovibo@cluster0-1m6kn.azure.mongodb.net/test?authSource=admin&replicaSet=Cluster0-shard-0&w=majority&readPreference=primary&appname=MongoDB%20Compass%20Community&retryWrites=true&ssl=true",
+  database: "AngSQL",
+  listenPort: 6803
+})
+
+const configMongo2 = api.CreateMongoConfiguration({
+  connectionString:"mongodb+srv://JeroenLeertouwer:Mo%2328Jovibo@cluster0-w2idf.gcp.mongodb.net/test?authSource=admin&replicaSet=Cluster0-shard-0&readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=true",
+  database: "AngSQL",
+  listenPort: 6804
+})
+
+const configMongo3 = api.CreateMongoConfiguration({
+  connectionString:"mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false",
+  database: "AngSQL",
+  listenPort: 6805
+})
+
 //api.Connect(configMySQL);
 //api.Connect(configMSSQL);
-api.Connect(configSQLite);
+api.Connect(configMongo1);

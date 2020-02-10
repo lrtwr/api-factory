@@ -59,42 +59,47 @@ var daoMongoDB = /** @class */ (function (_super) {
         _this.config = config;
         _this.status = status;
         _this.callback = callback;
+        _this.mongoCollectionNames = [];
+        _this.GetTableNames = function () {
+            return _this.mongoCollectionNames;
+        };
+        _this.GetViewNames = function () {
+            return [];
+        };
         status.DbConnect = factory_1.factory.enums.enumRunningStatus.DbConnectInitializing;
         _this.AsyncConnect();
         return _this;
     }
-    daoMongoDB.prototype.dbConnect = function (deze) {
+    daoMongoDB.prototype.AsyncConnect = function () {
         return __awaiter(this, void 0, void 0, function () {
+            var self;
             return __generator(this, function (_a) {
-                mongodb_1.MongoClient.connect(deze.config.connectionString, { useNewUrlParser: true, useUnifiedTopology: true }, function (error, client) {
+                self = this;
+                mongodb_1.MongoClient.connect(self.config.connectionString, { useNewUrlParser: true, useUnifiedTopology: true }, function (error, client) {
                     if (error) {
-                        deze.status.DbConnect = factory_1.factory.enums.enumRunningStatus.DbConnectError;
+                        self.status.DbConnect = factory_1.factory.enums.enumRunningStatus.DbConnectError;
                         console.log(error);
                     }
-                    deze.database = client.db(deze.config.database);
-                    deze.status.DbConnect = factory_1.factory.enums.enumRunningStatus.DbConnectConnected;
-                    deze.database = client.db(deze.config.database);
-                    console.log("Connected to MongoDb: `" + deze.config.database + "`!");
-                    deze.callback(deze.server);
+                    self.db = client.db(self.config.database);
+                    self.status.DbConnect = factory_1.factory.enums.enumRunningStatus.DbConnectConnected;
+                    console.log("Connected to MongoDb: `" + self.config.database + "`!");
+                    self.db.listCollections().toArray(function (error, colInfo) {
+                        if (error)
+                            self.lastErrors.push(error);
+                        colInfo.forEach(function (column) {
+                            if (column.type == "collection") {
+                                self.mongoCollectionNames.push(column.name);
+                            }
+                        });
+                        self.callback(self.server);
+                    });
                 });
                 return [2 /*return*/];
             });
         });
     };
-    daoMongoDB.prototype.AsyncConnect = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.dbConnect(this)];
-                    case 1:
-                        _a.sent();
-                        return [2 /*return*/];
-                }
-            });
-        });
-    };
     daoMongoDB.prototype.AsyncGet = function (collectionName, request) {
-        var collection = this.database.collection(collectionName);
+        var collection = this.db.collection(collectionName);
         var projection = {};
         var sort = {};
         var query = {};
@@ -120,7 +125,7 @@ var daoMongoDB = /** @class */ (function (_super) {
         });
     };
     daoMongoDB.prototype.AsyncGetId = function (collectionName, request) {
-        var collection = this.database.collection(collectionName);
+        var collection = this.db.collection(collectionName);
         return new Promise(function (resolve, reject) {
             collection.findOne({ _id: new mongodb_1.ObjectID(request.params.id) }, function (error, result) {
                 if (error) {
@@ -135,7 +140,7 @@ var daoMongoDB = /** @class */ (function (_super) {
         });
     };
     daoMongoDB.prototype.AsyncExistId = function (collectionName, request) {
-        var collection = this.database.collection(collectionName);
+        var collection = this.db.collection(collectionName);
         return new Promise(function (resolve, reject) {
             collection.findOne({ _id: new mongodb_1.ObjectID(request.params.id) }, function (error, result) {
                 if (error) {
@@ -150,7 +155,7 @@ var daoMongoDB = /** @class */ (function (_super) {
         });
     };
     daoMongoDB.prototype.AsyncPost = function (collectionName, request) {
-        var collection = this.database.collection(collectionName);
+        var collection = this.db.collection(collectionName);
         return new Promise(function (resolve, reject) {
             collection.insertOne(request.body, function (error, result) {
                 if (error)
@@ -161,7 +166,7 @@ var daoMongoDB = /** @class */ (function (_super) {
         });
     };
     daoMongoDB.prototype.AsyncPatchId = function (collectionName, request) {
-        var collection = this.database.collection(collectionName);
+        var collection = this.db.collection(collectionName);
         return new Promise(function (resolve, reject) {
             collection.updateOne({ _id: new mongodb_1.ObjectID(request.params.id) }, { $set: request.body }, function (error, result) {
                 if (error)
@@ -171,7 +176,7 @@ var daoMongoDB = /** @class */ (function (_super) {
         });
     };
     daoMongoDB.prototype.AsyncCount = function (collectionName, request) {
-        var collection = this.database.collection(collectionName);
+        var collection = this.db.collection(collectionName);
         var query = {};
         if (request.body["query"] != null)
             query = request.body["query"];
@@ -186,31 +191,13 @@ var daoMongoDB = /** @class */ (function (_super) {
         });
     };
     daoMongoDB.prototype.AsyncDeleteId = function (collectionName, request) {
-        var collection = this.database.collection(collectionName);
+        var collection = this.db.collection(collectionName);
         var filter = { _id: new mongodb_1.ObjectID(request.params.id) };
         return new Promise(function (resolve, reject) {
             collection.deleteOne(filter, function (error, result) {
                 if (error)
                     reject(error);
                 resolve([result.deletedCount]);
-            });
-        });
-    };
-    daoMongoDB.prototype.GetCollectionOrTableNames = function (callback) {
-        return __awaiter(this, void 0, void 0, function () {
-            var ret_val, tableNames;
-            return __generator(this, function (_a) {
-                ret_val = [];
-                tableNames = [];
-                this.database.listCollections().toArray(function (error, colInfo) {
-                    colInfo.forEach(function (column) {
-                        if (column.type == "collection") {
-                            tableNames.push(column.name);
-                        }
-                    });
-                    callback(tableNames);
-                });
-                return [2 /*return*/];
             });
         });
     };

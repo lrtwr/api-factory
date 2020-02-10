@@ -3,7 +3,7 @@ import { factory } from "../setup/factory";
 import { MongoClient, ObjectID } from "mongodb";
 
 export class daoMongoDB extends factory.abstracts.AbstractDaoSupport {
-  public database: any;
+  mongoCollectionNames: string[] = [];
   constructor(
     private server: any,
     private config: any,
@@ -15,29 +15,34 @@ export class daoMongoDB extends factory.abstracts.AbstractDaoSupport {
     this.AsyncConnect();
   }
 
-  public async dbConnect(deze: any) {
+  public async AsyncConnect() {
+    const self = this;
     MongoClient.connect(
-      deze.config.connectionString,
+      self.config.connectionString,
       { useNewUrlParser: true, useUnifiedTopology: true },
       (error, client) => {
         if (error) {
-          deze.status.DbConnect = factory.enums.enumRunningStatus.DbConnectError;
+          self.status.DbConnect = factory.enums.enumRunningStatus.DbConnectError;
           console.log(error);
         }
-        deze.database = client.db(deze.config.database);
-        deze.status.DbConnect = factory.enums.enumRunningStatus.DbConnectConnected;
-        deze.database = client.db(deze.config.database);
-        console.log("Connected to MongoDb: `" + deze.config.database + "`!");
-        deze.callback(deze.server);
-      }
+        self.db = client.db(self.config.database);
+        self.status.DbConnect = factory.enums.enumRunningStatus.DbConnectConnected;
+        console.log("Connected to MongoDb: `" + self.config.database + "`!");
+        self.db.listCollections().toArray((error, colInfo) => {
+          if(error)self.lastErrors.push(error);
+          colInfo.forEach(column => {
+            if (column.type == "collection") {
+              self.mongoCollectionNames.push(column.name);
+            }
+          });
+          self.callback(self.server);
+        });
+       }
     );
-  }
-  public async AsyncConnect() {
-    await this.dbConnect(this);
   }
 
   AsyncGet(collectionName, request) {
-    var collection = this.database.collection(collectionName);
+    var collection = this.db.collection(collectionName);
 
     let projection = {};
     let sort = {};
@@ -63,7 +68,7 @@ export class daoMongoDB extends factory.abstracts.AbstractDaoSupport {
   }
 
   AsyncGetId(collectionName, request) {
-    var collection = this.database.collection(collectionName);
+    var collection = this.db.collection(collectionName);
     return new Promise((resolve, reject) => {
       collection.findOne(
         { _id: new ObjectID(request.params.id) },
@@ -80,7 +85,7 @@ export class daoMongoDB extends factory.abstracts.AbstractDaoSupport {
   }
 
   AsyncExistId(collectionName, request) {
-    var collection = this.database.collection(collectionName);
+    var collection = this.db.collection(collectionName);
     return new Promise((resolve, reject) => {
       collection.findOne(
         { _id: new ObjectID(request.params.id) },
@@ -97,7 +102,7 @@ export class daoMongoDB extends factory.abstracts.AbstractDaoSupport {
   }
 
   AsyncPost(collectionName, request) {
-    var collection = this.database.collection(collectionName);
+    var collection = this.db.collection(collectionName);
     return new Promise((resolve, reject) => {
       collection.insertOne(request.body, (error, result) => {
         if (error) reject(error);
@@ -108,7 +113,7 @@ export class daoMongoDB extends factory.abstracts.AbstractDaoSupport {
   }
 
   AsyncPatchId(collectionName, request) {
-    var collection = this.database.collection(collectionName);
+    var collection = this.db.collection(collectionName);
     return new Promise((resolve, reject) => {
       collection.updateOne(
         { _id: new ObjectID(request.params.id) },
@@ -122,7 +127,7 @@ export class daoMongoDB extends factory.abstracts.AbstractDaoSupport {
   }
 
   AsyncCount(collectionName, request) {
-    var collection = this.database.collection(collectionName);
+    var collection = this.db.collection(collectionName);
     let query = {};
     if (request.body["query"] != null) query = request.body["query"];
 
@@ -138,7 +143,7 @@ export class daoMongoDB extends factory.abstracts.AbstractDaoSupport {
   }
 
   AsyncDeleteId(collectionName, request) {
-    var collection = this.database.collection(collectionName);
+    var collection = this.db.collection(collectionName);
     var filter = { _id: new ObjectID(request.params.id) };
     return new Promise((resolve, reject) => {
       collection.deleteOne(filter, (error, result) => {
@@ -148,16 +153,11 @@ export class daoMongoDB extends factory.abstracts.AbstractDaoSupport {
     });
   }
 
-  async GetCollectionOrTableNames(callback?: { (tableNames: string[]): void }) {
-    var ret_val = [];
-    var tableNames: string[] = [];
-    this.database.listCollections().toArray((error, colInfo) => {
-      colInfo.forEach(column => {
-        if (column.type == "collection") {
-          tableNames.push(column.name);
-        }
-      });
-      callback(tableNames);
-    });
-  }
+  GetTableNames = (): string[] => {
+    return this.mongoCollectionNames;
+      };
+    
+      GetViewNames =  (): string[] => {
+        return [];
+      };
 }
