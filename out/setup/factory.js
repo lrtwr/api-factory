@@ -1,17 +1,4 @@
 "use strict";
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -50,42 +37,17 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var jl_1 = require("./jl");
+var enums_1 = require("./enums");
+var abstracts_1 = require("./abstracts");
 var factory;
 (function (factory) {
     factory.jl = jl_1.jl;
-    // export const GetPropArray = (
-    //   oArray: factory.jl.DynamicObject,
-    //   propertyName: string
-    // ): string[] => {
-    //   var ret_value: string[] = [];
-    //   oArray.forEach(row => {
-    //     if (ret_value.indexOf(row[propertyName]) == -1) {
-    //       ret_value.push(row[propertyName]);
-    //     }
-    //   });
-    //   return ret_value;
-    // };
-    var enumApiActions;
-    (function (enumApiActions) {
-        enumApiActions[enumApiActions["Create"] = 0] = "Create";
-        enumApiActions[enumApiActions["Read"] = 1] = "Read";
-        enumApiActions[enumApiActions["Update"] = 2] = "Update";
-        enumApiActions[enumApiActions["Delete"] = 3] = "Delete";
-        enumApiActions[enumApiActions["Count"] = 4] = "Count";
-        enumApiActions[enumApiActions["Error"] = 5] = "Error";
-    })(enumApiActions = factory.enumApiActions || (factory.enumApiActions = {}));
-    var enumDatabaseType;
-    (function (enumDatabaseType) {
-        enumDatabaseType["MongoDb"] = "Mongo database";
-        enumDatabaseType["SQLite"] = "SQLite 3";
-        enumDatabaseType["SQLiteMemory"] = "SQLite 3 in Memory";
-        enumDatabaseType["MySQL"] = "MySQL server";
-        enumDatabaseType["MSSQL"] = "Microsoft SQL server";
-    })(enumDatabaseType = factory.enumDatabaseType || (factory.enumDatabaseType = {}));
-    var ApiTools = /** @class */ (function () {
-        function ApiTools() {
+    factory.enums = enums_1.enums;
+    factory.abstracts = abstracts_1.abstracts;
+    var ApiJsonResponse = /** @class */ (function () {
+        function ApiJsonResponse() {
         }
-        ApiTools.prototype.awaitAndRespond = function (request, response, promise, apiAction) {
+        ApiJsonResponse.prototype.awaitAndRespond = function (request, response, promise, apiAction) {
             return __awaiter(this, void 0, void 0, function () {
                 var id, answer, result, errResponse;
                 return __generator(this, function (_a) {
@@ -100,15 +62,15 @@ var factory;
                         case 1:
                             answer = _a.sent();
                             switch (apiAction) {
-                                case enumApiActions.Error:
+                                case factory.enums.enumApiActions.Error:
                                     response.status(answer.status);
                                     break;
-                                case enumApiActions.Read:
+                                case factory.enums.enumApiActions.Read:
                                     response.status(200);
                                     break;
-                                case enumApiActions.Update:
-                                case enumApiActions.Create:
-                                case enumApiActions.Delete:
+                                case factory.enums.enumApiActions.Update:
+                                case factory.enums.enumApiActions.Create:
+                                case factory.enums.enumApiActions.Delete:
                                     response.status(201);
                                     break;
                             }
@@ -116,7 +78,7 @@ var factory;
                             if (id)
                                 result.lastId = id;
                             switch (apiAction) {
-                                case enumApiActions.Error:
+                                case factory.enums.enumApiActions.Error:
                                     errResponse = {};
                                     errResponse["message"] = answer["message"];
                                     errResponse["expose"] = answer["expose"];
@@ -127,25 +89,25 @@ var factory;
                                     errResponse["stack"] = answer["stack"];
                                     result.error = errResponse;
                                     break;
-                                case enumApiActions.Read:
+                                case factory.enums.enumApiActions.Read:
                                     result.rows = answer;
                                     if (result.rows.length)
                                         result.count = result.rows.length;
                                     break;
-                                case enumApiActions.Count:
+                                case factory.enums.enumApiActions.Count:
                                     result.count = answer[0].count;
                                     break;
-                                case enumApiActions.Create:
+                                case factory.enums.enumApiActions.Create:
                                     result.lastId = answer;
                                     if (result.lastId)
                                         result.created = 1;
                                     result.count = 1;
                                     break;
-                                case enumApiActions.Update:
+                                case factory.enums.enumApiActions.Update:
                                     result.updated = answer[0];
                                     result.count = answer[0];
                                     break;
-                                case enumApiActions.Delete:
+                                case factory.enums.enumApiActions.Delete:
                                     result.deleted = answer[0];
                                     break;
                             }
@@ -156,55 +118,9 @@ var factory;
                 });
             });
         };
-        return ApiTools;
+        return ApiJsonResponse;
     }());
-    factory.ApiTools = ApiTools;
-    var AbstractApiHandler = /** @class */ (function (_super) {
-        __extends(AbstractApiHandler, _super);
-        function AbstractApiHandler() {
-            return _super.call(this) || this;
-        }
-        return AbstractApiHandler;
-    }(ApiTools));
-    factory.AbstractApiHandler = AbstractApiHandler;
-    var AbstractDaoSupport = /** @class */ (function () {
-        function AbstractDaoSupport(status) {
-            var _this = this;
-            this.GetTableNames = function () {
-                return _this.tableProperties.GetPropArray(_this.tableProperties.db.table_type.table, "table_name");
-            };
-            this.GetViewNames = function () {
-                return _this.tableProperties.GetPropArray(_this.tableProperties.db.table_type.view, "table_name");
-            };
-            status.DbConnect = enumRunningStatus.DbConnectInitializing;
-        }
-        AbstractDaoSupport.prototype.GetColumnProperties = function (tableName) {
-            return this.tableProperties.db.table_name[tableName];
-        };
-        AbstractDaoSupport.prototype.GetPrimarayKeyColumnName = function (tableName) {
-            var ret_value;
-            this.tableProperties.db.table_name[tableName].forEach(function (column) {
-                if (column.column_is_pk) {
-                    ret_value = column.column_name;
-                }
-            });
-            return ret_value;
-        };
-        return AbstractDaoSupport;
-    }());
-    factory.AbstractDaoSupport = AbstractDaoSupport;
-    var enumRunningStatus;
-    (function (enumRunningStatus) {
-        enumRunningStatus["Down"] = "Down";
-        enumRunningStatus["Initializing"] = "Initializing";
-        enumRunningStatus["ApiServerInitializing"] = "ApiServer is initializing";
-        enumRunningStatus["DbConnectInitializing"] = "Database connection is initializing";
-        enumRunningStatus["DbConnectConnected"] = "Database is Connected";
-        enumRunningStatus["ApiServerUp"] = "ApiServer is Up";
-        enumRunningStatus["ApiServerError"] = "ApiServer Error";
-        enumRunningStatus["DbConnectError"] = "Database connection Error";
-        enumRunningStatus["UpAndConnected"] = "Up and Running";
-    })(enumRunningStatus = factory.enumRunningStatus || (factory.enumRunningStatus = {}));
+    factory.ApiJsonResponse = ApiJsonResponse;
     var RunningStatus = /** @class */ (function () {
         function RunningStatus(status, apiServer, dbConnect) {
             this.status = status;
@@ -227,12 +143,12 @@ var factory;
             },
             set: function (value) {
                 this.apiServer = value;
-                if (this.apiServer == enumRunningStatus.ApiServerInitializing) {
-                    this.status = enumRunningStatus.Initializing;
+                if (this.apiServer == factory.enums.enumRunningStatus.ApiServerInitializing) {
+                    this.status = factory.enums.enumRunningStatus.Initializing;
                 }
-                if (this.apiServer == enumRunningStatus.ApiServerUp &&
-                    this.dbConnect == enumRunningStatus.DbConnectConnected) {
-                    this.status = enumRunningStatus.UpAndConnected;
+                if (this.apiServer == factory.enums.enumRunningStatus.ApiServerUp &&
+                    this.dbConnect == factory.enums.enumRunningStatus.DbConnectConnected) {
+                    this.status = factory.enums.enumRunningStatus.UpAndConnected;
                 }
             },
             enumerable: true,
@@ -244,12 +160,12 @@ var factory;
             },
             set: function (value) {
                 this.dbConnect = value;
-                if (this.dbConnect == enumRunningStatus.DbConnectInitializing) {
-                    this.status = enumRunningStatus.Initializing;
+                if (this.dbConnect == factory.enums.enumRunningStatus.DbConnectInitializing) {
+                    this.status = factory.enums.enumRunningStatus.Initializing;
                 }
-                if (this.apiServer == enumRunningStatus.ApiServerUp &&
-                    this.dbConnect == enumRunningStatus.DbConnectConnected) {
-                    this.status = enumRunningStatus.UpAndConnected;
+                if (this.apiServer == factory.enums.enumRunningStatus.ApiServerUp &&
+                    this.dbConnect == factory.enums.enumRunningStatus.DbConnectConnected) {
+                    this.status = factory.enums.enumRunningStatus.UpAndConnected;
                 }
             },
             enumerable: true,
@@ -288,7 +204,7 @@ var factory;
     }());
     factory.daoResult = daoResult;
     var Configuration = /** @class */ (function () {
-        function Configuration(databaseType, connectionString, listenPort, database, user, password, host, server) {
+        function Configuration(databaseType, connectionString, listenPort, database, user, password, host, server, port) {
             this.databaseType = databaseType;
             this.connectionString = connectionString;
             this.listenPort = listenPort;
@@ -297,6 +213,7 @@ var factory;
             this.password = password;
             this.host = host;
             this.server = server;
+            this.port = port;
             if (connectionString === null)
                 connectionString = "Data Source=sqlite.db;Version=3;New=True;";
             if (database === null)
@@ -304,7 +221,7 @@ var factory;
             if (listenPort === null)
                 listenPort = 8000;
             if (databaseType === null)
-                databaseType = enumDatabaseType.SQLite;
+                databaseType = factory.enums.enumDatabaseType.SQLite;
         }
         return Configuration;
     }());

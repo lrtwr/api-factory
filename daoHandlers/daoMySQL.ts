@@ -1,67 +1,50 @@
-import { ApiFactoryHandler } from './daoSupport';
+import { ApiFactoryHandler } from "./daoSupport";
 const mysql = require("mysql");
 import { ApiSQLStatements } from "../setup/ApiSQLStatements";
 import { factory } from "../setup/factory";
 
-export class daoMySQL extends factory.AbstractDaoSupport {
+export class daoMySQL extends factory.abstracts.AbstractDaoSupport {
   constructor(
     private server: any,
     private config: any,
     private status: factory.RunningStatus,
     private callback?: { (server): void }
   ) {
-    super(status);
-    this.AsyncConnect();
-  }
+    super();
+    status.DbConnect = factory.enums.enumRunningStatus.DbConnectInitializing;
 
-  public async dbConnect() {
-    const deze = this;
+ 
+    const self = this;
     var db = mysql.createConnection({
       host: this.config.host,
       user: this.config.user,
       password: this.config.password,
-      database: this.config.database
+      database: this.config.database,
+      port: this.config.port
     });
-    console.log("1");
-    db.connect();
-
-    this.database = db;
-
-    console.log("Connected to MySQL: `" + this.config.database + "`!");
-    this.status.DbConnect = factory.enumRunningStatus.DbConnectConnected;
-    var res1: any;
-    db.query("USE " + this.config.database, (error, result) => {
-      if (error) console.log(error);
-      res1 = result;
+    this.db = db;
+    db.connect(error => {
+      if (error) {
+        this.lastErrors.push(error);
+        throw error;
+      }
+      var sql = ApiSQLStatements.GetMySQLTableColumnInfoStatement(
+        this.config.database
+      );
+      db.query(sql, (error, result) => {
+        if (error) {
+          this.lastErrors.push(error);
+          throw error;
+        }
+        self.tableProperties = new factory.jl.jsonDatabase(result, [
+          "table_name",
+          "table_type"
+        ]);
+        console.log("Connected to MySQL: `" + this.config.database + "`!");
+        this.status.DbConnect = factory.enums.enumRunningStatus.DbConnectConnected;
+        self.callback(self.server);
+      });
     });
-
-    console.log("3 USE " + this.config.database + " done");
-    var sql =
-      "USE " +
-      deze.config.database +
-      ";" +
-      ApiSQLStatements.GetMySQLTableColumnInfoStatement(this.config.database);
-    await db.query(sql, (error, result) => {
-      //deze.tableColumnProperties = result;
-      deze.tableProperties= new factory.jl.jsonDatabase(result,["table_name","table_type"]);
-    });
-    // sql =
-    //   "USE " +
-    //   deze.config.database +
-    //   ";" +
-    //   ApiSQLStatements.GetMySQLViewColumnInfoStatement(this.config.database);
-    // await db.query(sql, (error, result) => {
-    //   deze.viewColumnProperties = result;
-    // });
-  }
-
-  public async AsyncConnect() {
-    const deze = this;
-    console.log("0 connecting");
-    await this.dbConnect();
-
-    deze.callback(deze.server);
-    console.log("6 mysql callback done.");
   }
 
   AsyncPost(tableName, request) {
@@ -72,7 +55,7 @@ export class daoMySQL extends factory.AbstractDaoSupport {
       request
     );
     return new Promise((resolve, reject) => {
-      this.database.query(sql, function(error, result, fields) {
+      this.db.query(sql, function(error, result, fields) {
         if (error) {
           console.log(error.message);
           reject(error);
@@ -91,7 +74,7 @@ export class daoMySQL extends factory.AbstractDaoSupport {
       request.params.id
     );
     return new Promise((resolve, reject) => {
-      this.database.query(sql, function(error, result) {
+      this.db.query(sql, function(error, result) {
         if (error) {
           console.log(error.message);
           reject(error);
@@ -111,7 +94,7 @@ export class daoMySQL extends factory.AbstractDaoSupport {
       request
     );
     return new Promise((resolve, reject) => {
-      this.database.query(sql, function(error, result) {
+      this.db.query(sql, function(error, result) {
         if (error) {
           console.log(error.message);
           reject(error);
@@ -125,7 +108,7 @@ export class daoMySQL extends factory.AbstractDaoSupport {
   AsyncGet(tableName, request) {
     const sql = ApiSQLStatements.GetSelectFromJsonBody(tableName, request);
     return new Promise((resolve, reject) => {
-      this.database.query(sql, (error, result) => {
+      this.db.query(sql, (error, result) => {
         if (error) {
           reject(error);
         }
@@ -142,7 +125,7 @@ export class daoMySQL extends factory.AbstractDaoSupport {
       request.params.id
     );
     return new Promise((resolve, reject) => {
-      this.database.query(sql, (error, result) => {
+      this.db.query(sql, (error, result) => {
         if (error) {
           reject(error);
         }
@@ -159,7 +142,7 @@ export class daoMySQL extends factory.AbstractDaoSupport {
       request.params.id
     );
     return new Promise((resolve, reject) => {
-      this.database.query(sql, (error, result) => {
+      this.db.query(sql, (error, result) => {
         if (error) {
           reject(error);
         }
@@ -171,7 +154,7 @@ export class daoMySQL extends factory.AbstractDaoSupport {
   AsyncCount(tableName, request) {
     const sql = ApiSQLStatements.GetCountSelectFromJsonBody(tableName, request);
     return new Promise((resolve, reject) => {
-      this.database.query(sql, (error, result) => {
+      this.db.query(sql, (error, result) => {
         if (error) {
           reject(error);
         }

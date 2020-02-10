@@ -19,38 +19,40 @@ var factory_1 = require("../setup/factory");
 var daoSQLite = /** @class */ (function (_super) {
     __extends(daoSQLite, _super);
     function daoSQLite(server, config, status, callback) {
-        var _this = _super.call(this, status) || this;
+        var _this = _super.call(this) || this;
         _this.server = server;
         _this.config = config;
         _this.status = status;
         _this.callback = callback;
-        _this.AsyncConnect();
-        return _this;
-    }
-    daoSQLite.prototype.AsyncConnect = function () {
-        var deze = this;
-        deze.database = new sqlite3.Database(deze.config.database, function (error) {
+        status.DbConnect = factory_1.factory.enums.enumRunningStatus.DbConnectInitializing;
+        var self = _this;
+        self.db = new sqlite3.Database(self.config.database, function (error) {
             if (error) {
-                deze.status.DbConnect = factory_1.factory.enumRunningStatus.DbConnectError;
+                self.status.DbConnect = factory_1.factory.enums.enumRunningStatus.DbConnectError;
                 console.log(error);
+                _this.lastErrors.push(error);
             }
         });
-        deze.status.DbConnect = factory_1.factory.enumRunningStatus.DbConnectConnected;
-        console.log("Connected to SQLite database: " + deze.config.database);
+        self.status.DbConnect = factory_1.factory.enums.enumRunningStatus.DbConnectConnected;
+        console.log("Connected to SQLite database: " + self.config.database);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetSQLiteTableColumnInfoStatement();
-        deze.database.all(sql, function (error, result) {
-            deze.tableProperties = new factory_1.factory.jl.jsonDatabase(result, ["table_name", "table_type"]);
-            // deze.tableProperties= new factory.aObject(result,["table_name","table_type"]);
-            // deze.jsonDbTableProp= new factory.jsonDatabase(result,["table_name","table_type"]);
-            deze.callback(deze.server);
+        self.db.all(sql, function (error, result) {
+            if (error) {
+                _this.lastErrors.push(error);
+            }
+            else {
+                self.tableProperties = new factory_1.factory.jl.jsonDatabase(result, ["table_name", "table_type"]);
+                self.callback(self.server);
+            }
         });
-    };
+        return _this;
+    }
     daoSQLite.prototype.AsyncPost = function (tableName, request) {
         var _this = this;
         var columnProperties = this.GetColumnProperties(tableName);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetInsertStatement(tableName, columnProperties, request);
         return new Promise(function (resolve, reject) {
-            _this.database.run(sql, function (error, result) {
+            _this.db.run(sql, function (error, result) {
                 if (error) {
                     console.log(error.message);
                     reject(error);
@@ -65,7 +67,7 @@ var daoSQLite = /** @class */ (function (_super) {
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetDeleteWithIdStatement(tableName, identityColumn, request.params.id);
         return new Promise(function (resolve, reject) {
-            _this.database.run(sql, function (error, result) {
+            _this.db.run(sql, function (error, result) {
                 if (error) {
                     console.log(error.message);
                     reject(error);
@@ -80,7 +82,7 @@ var daoSQLite = /** @class */ (function (_super) {
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetUpdateStatement(tableName, identityColumn, this.GetColumnProperties(tableName), request);
         return new Promise(function (resolve, reject) {
-            _this.database.run(sql, function (error, result) {
+            _this.db.run(sql, function (error, result) {
                 if (error) {
                     console.log(error.message);
                     reject(error);
@@ -94,7 +96,7 @@ var daoSQLite = /** @class */ (function (_super) {
         var _this = this;
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetSelectFromJsonBody(tableName, request);
         return new Promise(function (resolve, reject) {
-            _this.database.all(sql, function (error, rows) {
+            _this.db.all(sql, function (error, rows) {
                 if (error) {
                     reject(error);
                 }
@@ -107,7 +109,7 @@ var daoSQLite = /** @class */ (function (_super) {
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetIdExistStatement(tableName, identityColumn, request.params.id);
         return new Promise(function (resolve, reject) {
-            _this.database.all(sql, function (error, rows) {
+            _this.db.all(sql, function (error, rows) {
                 if (error) {
                     reject(error);
                 }
@@ -120,7 +122,7 @@ var daoSQLite = /** @class */ (function (_super) {
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetSelectWithIdStatement(tableName, identityColumn, request.params.id);
         return new Promise(function (resolve, reject) {
-            _this.database.all(sql, function (error, rows) {
+            _this.db.all(sql, function (error, rows) {
                 if (error) {
                     reject(error);
                 }
@@ -132,7 +134,7 @@ var daoSQLite = /** @class */ (function (_super) {
         var _this = this;
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetCountSelectFromJsonBody(tableName, request);
         return new Promise(function (resolve, reject) {
-            _this.database.all(sql, function (error, rows) {
+            _this.db.all(sql, function (error, rows) {
                 if (error) {
                     reject(error);
                 }
@@ -141,6 +143,6 @@ var daoSQLite = /** @class */ (function (_super) {
         });
     };
     return daoSQLite;
-}(factory_1.factory.AbstractDaoSupport));
+}(factory_1.factory.abstracts.AbstractDaoSupport));
 exports.daoSQLite = daoSQLite;
 //# sourceMappingURL=daoSQLite.js.map

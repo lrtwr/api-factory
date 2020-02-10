@@ -52,6 +52,7 @@ export namespace jl {
 
   export class aObject {
     constructor(oArray: any[], aProp?: string[]) {
+      if(oArray){
       if (oArray.length > 0) {
         if (!aProp) aProp = Object.keys(oArray[0]);
         aProp.forEach(prop => {
@@ -63,6 +64,7 @@ export namespace jl {
         });
       }
     }
+  }
     [k: string]: { [k: string]: any[] };
   }
 }

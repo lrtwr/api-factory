@@ -3,37 +3,35 @@ import { ApiSQLStatements } from "../setup/ApiSQLStatements";
 import { factory } from "../setup/factory";
 
 
-export class daoSQLite extends factory.AbstractDaoSupport {
+export class daoSQLite extends factory.abstracts.AbstractDaoSupport {
   constructor(
     private server: any,
     private config: any,
     private status: factory.RunningStatus,
     private callback?: { (server): void }
   ) {
-    super(status);
-    this.AsyncConnect();
-  }
+    super();
+    status.DbConnect = factory.enums.enumRunningStatus.DbConnectInitializing;
 
-  AsyncConnect() {
-    const deze = this;
-    deze.database = new sqlite3.Database(deze.config.database, error => {
+    const self = this;
+    self.db = new sqlite3.Database(self.config.database, error => {
       if (error) {
-        deze.status.DbConnect = factory.enumRunningStatus.DbConnectError;
+        self.status.DbConnect = factory.enums.enumRunningStatus.DbConnectError;
         console.log(error);
+        this.lastErrors.push(error);
       }
     });
-    deze.status.DbConnect = factory.enumRunningStatus.DbConnectConnected;
-    console.log("Connected to SQLite database: " + deze.config.database);
+    self.status.DbConnect = factory.enums.enumRunningStatus.DbConnectConnected;
+    console.log("Connected to SQLite database: " + self.config.database);
     var sql = ApiSQLStatements.GetSQLiteTableColumnInfoStatement();
-
-    deze.database.all(sql, (error, result) => {
-
-      deze.tableProperties= new factory.jl.jsonDatabase(result,["table_name","table_type"]);
-
-
-      // deze.tableProperties= new factory.aObject(result,["table_name","table_type"]);
-      // deze.jsonDbTableProp= new factory.jsonDatabase(result,["table_name","table_type"]);
-      deze.callback(deze.server);
+    self.db.all(sql, (error, result) => {
+      if(error){
+        this.lastErrors.push(error);
+      }
+      else{
+      self.tableProperties = new factory.jl.jsonDatabase(result, ["table_name", "table_type"]);
+      self.callback(self.server);
+      }
     });
   }
 
@@ -45,7 +43,7 @@ export class daoSQLite extends factory.AbstractDaoSupport {
       request
     );
     return new Promise((resolve, reject) => {
-      this.database.run(sql, function(error, result) {
+      this.db.run(sql, function (error, result) {
         if (error) {
           console.log(error.message);
           reject(error);
@@ -64,7 +62,7 @@ export class daoSQLite extends factory.AbstractDaoSupport {
       request.params.id
     );
     return new Promise((resolve, reject) => {
-      this.database.run(sql, function(error, result) {
+      this.db.run(sql, function (error, result) {
         if (error) {
           console.log(error.message);
           reject(error);
@@ -84,7 +82,7 @@ export class daoSQLite extends factory.AbstractDaoSupport {
       request
     );
     return new Promise((resolve, reject) => {
-      this.database.run(sql, function(error, result) {
+      this.db.run(sql, function (error, result) {
         if (error) {
           console.log(error.message);
           reject(error);
@@ -98,7 +96,7 @@ export class daoSQLite extends factory.AbstractDaoSupport {
   AsyncGet(tableName, request) {
     const sql = ApiSQLStatements.GetSelectFromJsonBody(tableName, request);
     return new Promise((resolve, reject) => {
-      this.database.all(sql, function(error, rows) {
+      this.db.all(sql, function (error, rows) {
         if (error) {
           reject(error);
         }
@@ -115,7 +113,7 @@ export class daoSQLite extends factory.AbstractDaoSupport {
       request.params.id
     );
     return new Promise((resolve, reject) => {
-      this.database.all(sql, function(error, rows) {
+      this.db.all(sql, function (error, rows) {
         if (error) {
           reject(error);
         }
@@ -132,7 +130,7 @@ export class daoSQLite extends factory.AbstractDaoSupport {
       request.params.id
     );
     return new Promise((resolve, reject) => {
-      this.database.all(sql, function(error, rows) {
+      this.db.all(sql, function (error, rows) {
         if (error) {
           reject(error);
         }
@@ -144,7 +142,7 @@ export class daoSQLite extends factory.AbstractDaoSupport {
   AsyncCount(tableName, request) {
     const sql = ApiSQLStatements.GetCountSelectFromJsonBody(tableName, request);
     return new Promise((resolve, reject) => {
-      this.database.all(sql, function(error, rows) {
+      this.db.all(sql, function (error, rows) {
         if (error) {
           reject(error);
         }

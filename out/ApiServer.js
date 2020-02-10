@@ -15,22 +15,22 @@ var ApiServer = /** @class */ (function () {
         this.app.use(BodyParser.json());
         this.app.use(BodyParser.urlencoded({ extended: true }));
         //this.app.use(this.app.router); 
-        this.status = new factory_1.factory.RunningStatus(factory_1.factory.enumRunningStatus.Down, factory_1.factory.enumRunningStatus.Down, factory_1.factory.enumRunningStatus.Down);
+        this.status = new factory_1.factory.RunningStatus(factory_1.factory.enums.enumRunningStatus.Down, factory_1.factory.enums.enumRunningStatus.Down, factory_1.factory.enums.enumRunningStatus.Down);
         if (!config)
             console.log("Empty configuration is given!");
-        this.status.ApiServer = factory_1.factory.enumRunningStatus.ApiServerInitializing;
+        this.status.ApiServer = factory_1.factory.enums.enumRunningStatus.ApiServerInitializing;
         var api = this.app
             .listen(config.listenPort, function () {
             console.log("Server is started at url:" +
                 api.address().address +
                 " port: " +
                 api.address().port);
-            _this.status.ApiServer = factory_1.factory.enumRunningStatus.ApiServerUp;
+            _this.status.ApiServer = factory_1.factory.enums.enumRunningStatus.ApiServerUp;
         })
             .on("error", function (err) {
             console.log("foutje!!!!!!!!!!!!!!!!!");
             if (err.errno === "EADDRINUSE") {
-                this.status.apiServer = factory_1.factory.enumRunningStatus.ApiServerError;
+                this.status.apiServer = factory_1.factory.enums.enumRunningStatus.ApiServerError;
                 console.log("Port " + config.listenPort + " is busy");
             }
             else {

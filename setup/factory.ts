@@ -1,43 +1,18 @@
-import {jl as _jl} from './jl';
+import { jl as _jl } from "./jl";
+import { enums as _enums } from "./enums";
+import { abstracts as _abstracts } from "./abstracts";
 
 export namespace factory {
   export import jl = _jl;
-  // export const GetPropArray = (
-  //   oArray: factory.jl.DynamicObject,
-  //   propertyName: string
-  // ): string[] => {
-  //   var ret_value: string[] = [];
-  //   oArray.forEach(row => {
-  //     if (ret_value.indexOf(row[propertyName]) == -1) {
-  //       ret_value.push(row[propertyName]);
-  //     }
-  //   });
-  //   return ret_value;
-  // };
+  export import enums = _enums;
+  export import abstracts = _abstracts;
 
-  export enum enumApiActions {
-    Create,
-    Read,
-    Update,
-    Delete,
-    Count,
-    Error
-  }
-
-  export enum enumDatabaseType {
-    MongoDb = "Mongo database",
-    SQLite = "SQLite 3",
-    SQLiteMemory = "SQLite 3 in Memory",
-    MySQL = "MySQL server",
-    MSSQL = "Microsoft SQL server"
-  }
-
-  export class ApiTools {
+  export class ApiJsonResponse {
     async awaitAndRespond(
       request,
       response,
       promise,
-      apiAction: enumApiActions
+      apiAction: enums.enumApiActions
     ) {
       var id: any;
       if (request.params) {
@@ -47,22 +22,22 @@ export namespace factory {
       }
       const answer = await promise;
       switch (apiAction) {
-        case enumApiActions.Error:
+        case enums.enumApiActions.Error:
           response.status(answer.status);
           break;
-        case enumApiActions.Read:
+        case enums.enumApiActions.Read:
           response.status(200);
           break;
-        case enumApiActions.Update:
-        case enumApiActions.Create:
-        case enumApiActions.Delete:
+        case enums.enumApiActions.Update:
+        case enums.enumApiActions.Create:
+        case enums.enumApiActions.Delete:
           response.status(201);
           break;
       }
       const result = new daoResult();
       if (id) result.lastId = id;
       switch (apiAction) {
-        case enumApiActions.Error:
+        case enums.enumApiActions.Error:
           const errResponse: { [k: string]: any } = {};
           errResponse["message"] = answer["message"];
           errResponse["expose"] = answer["expose"];
@@ -73,23 +48,23 @@ export namespace factory {
           errResponse["stack"] = answer["stack"];
           result.error = errResponse;
           break;
-        case enumApiActions.Read:
+        case enums.enumApiActions.Read:
           result.rows = answer;
           if (result.rows.length) result.count = result.rows.length;
           break;
-        case enumApiActions.Count:
+        case enums.enumApiActions.Count:
           result.count = answer[0].count;
           break;
-        case enumApiActions.Create:
+        case enums.enumApiActions.Create:
           result.lastId = answer;
           if (result.lastId) result.created = 1;
           result.count = 1;
           break;
-        case enumApiActions.Update:
+        case enums.enumApiActions.Update:
           result.updated = answer[0];
           result.count = answer[0];
           break;
-        case enumApiActions.Delete:
+        case enums.enumApiActions.Delete:
           result.deleted = answer[0];
           break;
       }
@@ -98,117 +73,49 @@ export namespace factory {
     }
   }
 
-  export abstract class AbstractApiHandler extends ApiTools {
-    public dao: any;
-    constructor() {
-      super();
-    }
-    public abstract Post(tableName, request, response): any;
-    public abstract Get(tableName, request, response): any;
-    public abstract GetId(tableName, request, response): any;
-    public abstract Put(tableName, request, response): any;
-    public abstract PutId(tableName, request, response): any;
-    public abstract PatchId(tableName, request, response): any;
-    public abstract ExistId(tableName, request, response): any;
-    public abstract DeleteId(tableName, request, response): any;
-    public abstract GetCount(tableName, request, response): any;
-    public abstract Test(tableName, request, response): any;
-    public abstract Error(error, request, response): any;
-  }
-
-  export abstract class AbstractDaoSupport {
-    constructor(status: RunningStatus) {
-      status.DbConnect = enumRunningStatus.DbConnectInitializing;
-    }
-    database: any;
-    tableProperties: jl.jsonDatabase;
-
-    public abstract AsyncConnect();
-    public abstract AsyncPost(tableNameOrCollection, request): any;
-    public abstract AsyncGet(tableNameOrCollection, request): any;
-    public abstract AsyncGetId(tableNameOrCollection, request): any;
-    public abstract AsyncExistId(tableNameOrCollection, request): any;
-    public abstract AsyncPatchId(tableNameOrCollection, request): any;
-    public abstract AsyncDeleteId(tableNameOrCollection, request): any;
-    public abstract AsyncCount(tableNameOrCollection, request): any;
-
-    public GetColumnProperties(tableName) {
-      return this.tableProperties.db.table_name[tableName];
-    }
-
-    public GetPrimarayKeyColumnName(tableName) {
-      var ret_value:string;
-      this.tableProperties.db.table_name[tableName].forEach((column)=>{
-        if (column.column_is_pk) {
-          ret_value = column.column_name;
-        }
-      })
-      return ret_value;
-    }
-
-    public GetTableNames=()=>{
-      return this.tableProperties.GetPropArray(this.tableProperties.db.table_type.table,"table_name")
-    }
-    public GetViewNames=()=>{
-      return this.tableProperties.GetPropArray(this.tableProperties.db.table_type.view,"table_name")
-    }
-  }
-
-  export enum enumRunningStatus {
-    Down = "Down",
-    Initializing = "Initializing",
-    ApiServerInitializing = "ApiServer is initializing",
-    DbConnectInitializing = "Database connection is initializing",
-    DbConnectConnected = "Database is Connected",
-    ApiServerUp = "ApiServer is Up",
-    ApiServerError = "ApiServer Error",
-    DbConnectError = "Database connection Error",
-    UpAndConnected = "Up and Running"
-  }
-
   export class RunningStatus {
     constructor(
-      private status: enumRunningStatus,
-      private apiServer: enumRunningStatus,
-      private dbConnect: enumRunningStatus
+      private status: enums.enumRunningStatus,
+      private apiServer: enums.enumRunningStatus,
+      private dbConnect: enums.enumRunningStatus
     ) {}
 
-    get Status(): enumRunningStatus {
+    get Status(): enums.enumRunningStatus {
       return this.status;
     }
-    set Status(value: enumRunningStatus) {
+    set Status(value: enums.enumRunningStatus) {
       this.status = value;
     }
-    get ApiServer(): enumRunningStatus {
+    get ApiServer(): enums.enumRunningStatus {
       return this.apiServer;
     }
-    set ApiServer(value: enumRunningStatus) {
+    set ApiServer(value: enums.enumRunningStatus) {
       this.apiServer = value;
-      if (this.apiServer == enumRunningStatus.ApiServerInitializing) {
-        this.status = enumRunningStatus.Initializing;
+      if (this.apiServer == enums.enumRunningStatus.ApiServerInitializing) {
+        this.status = enums.enumRunningStatus.Initializing;
       }
       if (
-        this.apiServer == enumRunningStatus.ApiServerUp &&
-        this.dbConnect == enumRunningStatus.DbConnectConnected
+        this.apiServer == enums.enumRunningStatus.ApiServerUp &&
+        this.dbConnect == enums.enumRunningStatus.DbConnectConnected
       ) {
-        this.status = enumRunningStatus.UpAndConnected;
+        this.status = enums.enumRunningStatus.UpAndConnected;
       }
     }
 
-    get DbConnect(): enumRunningStatus {
+    get DbConnect(): enums.enumRunningStatus {
       return this.dbConnect;
     }
 
-    set DbConnect(value: enumRunningStatus) {
+    set DbConnect(value: enums.enumRunningStatus) {
       this.dbConnect = value;
-      if (this.dbConnect == enumRunningStatus.DbConnectInitializing) {
-        this.status = enumRunningStatus.Initializing;
+      if (this.dbConnect == enums.enumRunningStatus.DbConnectInitializing) {
+        this.status = enums.enumRunningStatus.Initializing;
       }
       if (
-        this.apiServer == enumRunningStatus.ApiServerUp &&
-        this.dbConnect == enumRunningStatus.DbConnectConnected
+        this.apiServer == enums.enumRunningStatus.ApiServerUp &&
+        this.dbConnect == enums.enumRunningStatus.DbConnectConnected
       ) {
-        this.status = enumRunningStatus.UpAndConnected;
+        this.status = enums.enumRunningStatus.UpAndConnected;
       }
     }
   }
@@ -237,20 +144,21 @@ export namespace factory {
 
   export class Configuration {
     constructor(
-      public databaseType?: enumDatabaseType,
+      public databaseType?: enums.enumDatabaseType,
       public connectionString?: string,
       public listenPort?: number,
       public database?: string,
       public user?: string,
       public password?: string,
       public host?: string,
-      public server?: string
+      public server?: string,
+      public port?: number
     ) {
       if (connectionString === null)
         connectionString = "Data Source=sqlite.db;Version=3;New=True;";
       if (database === null) database = "Default";
       if (listenPort === null) listenPort = 8000;
-      if (databaseType === null) databaseType = enumDatabaseType.SQLite;
+      if (databaseType === null) databaseType = enums.enumDatabaseType.SQLite;
     }
   }
 }

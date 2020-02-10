@@ -54,11 +54,12 @@ var mongodb_1 = require("mongodb");
 var daoMongoDB = /** @class */ (function (_super) {
     __extends(daoMongoDB, _super);
     function daoMongoDB(server, config, status, callback) {
-        var _this = _super.call(this, status) || this;
+        var _this = _super.call(this) || this;
         _this.server = server;
         _this.config = config;
         _this.status = status;
         _this.callback = callback;
+        status.DbConnect = factory_1.factory.enums.enumRunningStatus.DbConnectInitializing;
         _this.AsyncConnect();
         return _this;
     }
@@ -67,11 +68,11 @@ var daoMongoDB = /** @class */ (function (_super) {
             return __generator(this, function (_a) {
                 mongodb_1.MongoClient.connect(deze.config.connectionString, { useNewUrlParser: true, useUnifiedTopology: true }, function (error, client) {
                     if (error) {
-                        deze.status.DbConnect = factory_1.factory.enumRunningStatus.DbConnectError;
+                        deze.status.DbConnect = factory_1.factory.enums.enumRunningStatus.DbConnectError;
                         console.log(error);
                     }
                     deze.database = client.db(deze.config.database);
-                    deze.status.DbConnect = factory_1.factory.enumRunningStatus.DbConnectConnected;
+                    deze.status.DbConnect = factory_1.factory.enums.enumRunningStatus.DbConnectConnected;
                     deze.database = client.db(deze.config.database);
                     console.log("Connected to MongoDb: `" + deze.config.database + "`!");
                     deze.callback(deze.server);
@@ -214,6 +215,6 @@ var daoMongoDB = /** @class */ (function (_super) {
         });
     };
     return daoMongoDB;
-}(factory_1.factory.AbstractDaoSupport));
+}(factory_1.factory.abstracts.AbstractDaoSupport));
 exports.daoMongoDB = daoMongoDB;
 //# sourceMappingURL=daoMongoDB.js.map

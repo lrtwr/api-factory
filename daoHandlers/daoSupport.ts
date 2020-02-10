@@ -10,19 +10,19 @@ export class ApiFactoryHandler {
   public static GetDbApiHandler(server:any, config: factory.Configuration, status: factory.RunningStatus, callback?: {(server):void } ) {
     console.log(`Starting ${config.databaseType} api server`);
     switch (config.databaseType) {    
-      case factory.enumDatabaseType.MongoDb:
+      case factory.enums.enumDatabaseType.MongoDb:
         return new SQLApiHander( new daoMongoDB(server, config, status, callback));
         break;
-      case factory.enumDatabaseType.SQLite:
+      case factory.enums.enumDatabaseType.SQLite:
         return new SQLApiHander( new daoSQLite(server, config,status, callback));
         break;
-      case factory.enumDatabaseType.SQLiteMemory:
+      case factory.enums.enumDatabaseType.SQLiteMemory:
         return new SQLApiHander( new daoSQLite(server, config,status, callback));
         break;
-      case factory.enumDatabaseType.MySQL:
+      case factory.enums.enumDatabaseType.MySQL:
         return new SQLApiHander( new daoMySQL(server, config,status, callback));
         break;
-      case factory.enumDatabaseType.MSSQL:
+      case factory.enums.enumDatabaseType.MSSQL:
         return new SQLApiHander( new daoMSSQL(server, config,status, callback));
         break;
     }

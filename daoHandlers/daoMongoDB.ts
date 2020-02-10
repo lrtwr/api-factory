@@ -1,7 +1,8 @@
+
 import { factory } from "../setup/factory";
 import { MongoClient, ObjectID } from "mongodb";
 
-export class daoMongoDB extends factory.AbstractDaoSupport {
+export class daoMongoDB extends factory.abstracts.AbstractDaoSupport {
   public database: any;
   constructor(
     private server: any,
@@ -9,7 +10,8 @@ export class daoMongoDB extends factory.AbstractDaoSupport {
     private status: factory.RunningStatus,
     private callback?: { (server): void }
   ) {
-    super(status);
+    super();
+    status.DbConnect = factory.enums.enumRunningStatus.DbConnectInitializing;
     this.AsyncConnect();
   }
 
@@ -19,11 +21,11 @@ export class daoMongoDB extends factory.AbstractDaoSupport {
       { useNewUrlParser: true, useUnifiedTopology: true },
       (error, client) => {
         if (error) {
-          deze.status.DbConnect = factory.enumRunningStatus.DbConnectError;
+          deze.status.DbConnect = factory.enums.enumRunningStatus.DbConnectError;
           console.log(error);
         }
         deze.database = client.db(deze.config.database);
-        deze.status.DbConnect = factory.enumRunningStatus.DbConnectConnected;
+        deze.status.DbConnect = factory.enums.enumRunningStatus.DbConnectConnected;
         deze.database = client.db(deze.config.database);
         console.log("Connected to MongoDb: `" + deze.config.database + "`!");
         deze.callback(deze.server);

@@ -55,12 +55,14 @@ var factory_1 = require("../setup/factory");
 var daoMSSQL = /** @class */ (function (_super) {
     __extends(daoMSSQL, _super);
     function daoMSSQL(server, config, status, callback) {
-        var _this = _super.call(this, status) || this;
+        var _this = _super.call(this) || this;
         _this.server = server;
         _this.config = config;
         _this.status = status;
         _this.callback = callback;
-        _this.AsyncConnect();
+        status.DbConnect = factory_1.factory.enums.enumRunningStatus.DbConnectInitializing;
+        console.log("connecting");
+        _this.dbConnect();
         return _this;
     }
     daoMSSQL.prototype.dbConnect = function () {
@@ -73,40 +75,23 @@ var daoMSSQL = /** @class */ (function (_super) {
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 4, , 5]);
-                        // make sure that any items are correctly URL encoded in the connection string
                         return [4 /*yield*/, mssql.connect(this.config)];
                     case 2:
-                        // make sure that any items are correctly URL encoded in the connection string
                         _a.sent();
-                        this.database = mssql;
+                        this.db = mssql;
                         return [4 /*yield*/, mssql.query(ApiSQLStatements_1.ApiSQLStatements.GetMSSQLTableColumnInfoStatement())];
                     case 3:
                         result = _a.sent();
-                        //this.tableColumnProperties = result.recordset;
                         this.tableProperties = new factory_1.factory.jl.jsonDatabase(result.recordset, ["table_name", "table_type"]);
-                        this.status.DbConnect = factory_1.factory.enumRunningStatus.DbConnectConnected;
+                        this.status.DbConnect = factory_1.factory.enums.enumRunningStatus.DbConnectConnected;
+                        this.callback(this.server);
                         return [3 /*break*/, 5];
                     case 4:
                         error_1 = _a.sent();
+                        this.lastErrors.push(error_1);
                         console.log(error_1);
                         return [3 /*break*/, 5];
                     case 5: return [2 /*return*/];
-                }
-            });
-        });
-    };
-    daoMSSQL.prototype.AsyncConnect = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var deze;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        deze = this;
-                        return [4 /*yield*/, this.dbConnect()];
-                    case 1:
-                        _a.sent();
-                        deze.callback(deze.server);
-                        return [2 /*return*/];
                 }
             });
         });
@@ -115,7 +100,7 @@ var daoMSSQL = /** @class */ (function (_super) {
         var _this = this;
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetInsertStatement(tableName, this.GetColumnProperties(tableName), request);
         return new Promise(function (resolve, reject) {
-            _this.database.query(sql + ";SELECT SCOPE_IDENTITY() as LastID;", function (error, result, fields) {
+            _this.db.query(sql + ";SELECT SCOPE_IDENTITY() as LastID;", function (error, result, fields) {
                 if (error) {
                     console.log(error);
                     reject(error);
@@ -130,7 +115,7 @@ var daoMSSQL = /** @class */ (function (_super) {
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetDeleteWithIdStatement(tableName, identityColumn, request.params.id);
         return new Promise(function (resolve, reject) {
-            _this.database.query(sql, function (error, result) {
+            _this.db.query(sql, function (error, result) {
                 if (error) {
                     console.log(error.message);
                     reject(error);
@@ -144,7 +129,7 @@ var daoMSSQL = /** @class */ (function (_super) {
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetUpdateStatement(tableName, identityColumn, this.GetColumnProperties(tableName), request);
         return new Promise(function (resolve, reject) {
-            _this.database.query(sql, function (error, result) {
+            _this.db.query(sql, function (error, result) {
                 if (error) {
                     console.log(error.message);
                     reject(error);
@@ -157,7 +142,7 @@ var daoMSSQL = /** @class */ (function (_super) {
         var _this = this;
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetSelectFromJsonBody(tableName, request);
         return new Promise(function (resolve, reject) {
-            _this.database.query(sql, function (error, result) {
+            _this.db.query(sql, function (error, result) {
                 if (error) {
                     reject(error);
                 }
@@ -171,7 +156,7 @@ var daoMSSQL = /** @class */ (function (_super) {
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetIdExistStatement(tableName, identityColumn, request.params.id);
         return new Promise(function (resolve, reject) {
-            _this.database.query(sql, function (error, result) {
+            _this.db.query(sql, function (error, result) {
                 if (error) {
                     reject(error);
                 }
@@ -185,7 +170,7 @@ var daoMSSQL = /** @class */ (function (_super) {
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetSelectWithIdStatement(tableName, identityColumn, request.params.id);
         return new Promise(function (resolve, reject) {
-            _this.database.query(sql, function (error, result) {
+            _this.db.query(sql, function (error, result) {
                 if (error) {
                     reject(error);
                 }
@@ -198,7 +183,7 @@ var daoMSSQL = /** @class */ (function (_super) {
         var _this = this;
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetCountSelectFromJsonBody(tableName, request);
         return new Promise(function (resolve, reject) {
-            _this.database.query(sql, function (error, result) {
+            _this.db.query(sql, function (error, result) {
                 if (error) {
                     reject(error);
                 }
@@ -208,6 +193,6 @@ var daoMSSQL = /** @class */ (function (_super) {
         });
     };
     return daoMSSQL;
-}(factory_1.factory.AbstractDaoSupport));
+}(factory_1.factory.abstracts.AbstractDaoSupport));
 exports.daoMSSQL = daoMSSQL;
 //# sourceMappingURL=daoMSSQL.js.map

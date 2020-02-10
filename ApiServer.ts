@@ -17,13 +17,13 @@ export class ApiServer {
     this.app.use(BodyParser.urlencoded({ extended: true }));
     //this.app.use(this.app.router); 
     this.status = new factory.RunningStatus(
-      factory.enumRunningStatus.Down,
-      factory.enumRunningStatus.Down,
-      factory.enumRunningStatus.Down
+      factory.enums.enumRunningStatus.Down,
+      factory.enums.enumRunningStatus.Down,
+      factory.enums.enumRunningStatus.Down
     );
 
     if (!config) console.log("Empty configuration is given!");
-    this.status.ApiServer = factory.enumRunningStatus.ApiServerInitializing;
+    this.status.ApiServer = factory.enums.enumRunningStatus.ApiServerInitializing;
     const api = this.app
       .listen(config.listenPort, () => {
         console.log(
@@ -32,12 +32,12 @@ export class ApiServer {
             " port: " +
             api.address().port
         );
-        this.status.ApiServer = factory.enumRunningStatus.ApiServerUp;
+        this.status.ApiServer = factory.enums.enumRunningStatus.ApiServerUp;
       })
       .on("error", function(err) {
         console.log("foutje!!!!!!!!!!!!!!!!!");
         if (err.errno === "EADDRINUSE") {
-          this.status.apiServer = factory.enumRunningStatus.ApiServerError;
+          this.status.apiServer = factory.enums.enumRunningStatus.ApiServerError;
           console.log(`Port ${config.listenPort} is busy`);
         } else {
           console.log(err);

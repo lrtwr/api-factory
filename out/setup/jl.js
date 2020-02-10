@@ -46,18 +46,20 @@ var jl;
     var aObject = /** @class */ (function () {
         function aObject(oArray, aProp) {
             var _this = this;
-            if (oArray.length > 0) {
-                if (!aProp)
-                    aProp = Object.keys(oArray[0]);
-                aProp.forEach(function (prop) {
-                    if (!_this[prop])
-                        _this[prop] = {};
-                    oArray.forEach(function (obj) {
-                        if (!_this[prop][obj[prop]])
-                            _this[prop][obj[prop]] = [];
-                        _this[prop][obj[prop]].push(obj);
+            if (oArray) {
+                if (oArray.length > 0) {
+                    if (!aProp)
+                        aProp = Object.keys(oArray[0]);
+                    aProp.forEach(function (prop) {
+                        if (!_this[prop])
+                            _this[prop] = {};
+                        oArray.forEach(function (obj) {
+                            if (!_this[prop][obj[prop]])
+                                _this[prop][obj[prop]] = [];
+                            _this[prop][obj[prop]].push(obj);
+                        });
                     });
-                });
+                }
             }
         }
         return aObject;

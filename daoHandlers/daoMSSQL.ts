@@ -2,39 +2,36 @@ const mssql = require("mssql");
 import { ApiSQLStatements } from "../setup/ApiSQLStatements";
 import { factory } from "../setup/factory";
 
-export class daoMSSQL extends factory.AbstractDaoSupport {
+export class daoMSSQL extends factory.abstracts.AbstractDaoSupport {
   constructor(
     private server: any,
     private config: any,
     private status: factory.RunningStatus,
     private callback?: { (server): void }
   ) {
-    super(status);
-    this.AsyncConnect();
-  }
-  public async dbConnect() {
+    super();
+    status.DbConnect = factory.enums.enumRunningStatus.DbConnectInitializing;
     console.log("connecting");
+    this.dbConnect();
+  }
 
-    try {
-      // make sure that any items are correctly URL encoded in the connection string
-      await mssql.connect(this.config);
-      this.database = mssql;
-      var result = await mssql.query(
-        ApiSQLStatements.GetMSSQLTableColumnInfoStatement()
-      );
-      //this.tableColumnProperties = result.recordset;
-      this.tableProperties= new factory.jl.jsonDatabase(result.recordset,["table_name","table_type"]);
-      this.status.DbConnect = factory.enumRunningStatus.DbConnectConnected;
-    } catch (error) {
-      console.log(error);
+    public async dbConnect() {
+      console.log("connecting");
+  
+      try {
+        await mssql.connect(this.config);
+        this.db = mssql;
+        var result = await mssql.query(
+          ApiSQLStatements.GetMSSQLTableColumnInfoStatement()
+        );
+        this.tableProperties= new factory.jl.jsonDatabase(result.recordset,["table_name","table_type"]);
+        this.status.DbConnect = factory.enums.enumRunningStatus.DbConnectConnected;
+        this.callback(this.server);
+      } catch (error) {
+        this.lastErrors.push(error);
+        console.log(error);
+      }
     }
-  }
-
-  public async AsyncConnect() {
-    const deze = this;
-    await this.dbConnect();
-    deze.callback(deze.server);
-  }
 
   AsyncPost(tableName, request) {
     const sql = ApiSQLStatements.GetInsertStatement(
@@ -43,7 +40,7 @@ export class daoMSSQL extends factory.AbstractDaoSupport {
       request
     );
     return new Promise((resolve, reject) => {
-      this.database.query(
+      this.db.query(
         sql + ";SELECT SCOPE_IDENTITY() as LastID;",
         (error, result, fields) => {
           if (error) {
@@ -60,9 +57,12 @@ export class daoMSSQL extends factory.AbstractDaoSupport {
   AsyncDeleteId(tableName, request) {
     const identityColumn = this.GetPrimarayKeyColumnName(tableName);
     const sql: string = ApiSQLStatements.GetDeleteWithIdStatement(
-      tableName,identityColumn,request.params.id);
+      tableName,
+      identityColumn,
+      request.params.id
+    );
     return new Promise((resolve, reject) => {
-      this.database.query(sql, function(error, result) {
+      this.db.query(sql, function(error, result) {
         if (error) {
           console.log(error.message);
           reject(error);
@@ -81,7 +81,7 @@ export class daoMSSQL extends factory.AbstractDaoSupport {
       request
     );
     return new Promise((resolve, reject) => {
-      this.database.query(sql, function(error, result) {
+      this.db.query(sql, function(error, result) {
         if (error) {
           console.log(error.message);
           reject(error);
@@ -94,7 +94,7 @@ export class daoMSSQL extends factory.AbstractDaoSupport {
   AsyncGet(tableName, request) {
     const sql = ApiSQLStatements.GetSelectFromJsonBody(tableName, request);
     return new Promise((resolve, reject) => {
-      this.database.query(sql, (error, result) => {
+      this.db.query(sql, (error, result) => {
         if (error) {
           reject(error);
         }
@@ -111,7 +111,7 @@ export class daoMSSQL extends factory.AbstractDaoSupport {
       request.params.id
     );
     return new Promise((resolve, reject) => {
-      this.database.query(sql, (error, result) => {
+      this.db.query(sql, (error, result) => {
         if (error) {
           reject(error);
         }
@@ -128,7 +128,7 @@ export class daoMSSQL extends factory.AbstractDaoSupport {
       request.params.id
     );
     return new Promise((resolve, reject) => {
-      this.database.query(sql, (error, result) => {
+      this.db.query(sql, (error, result) => {
         if (error) {
           reject(error);
         }
@@ -140,7 +140,7 @@ export class daoMSSQL extends factory.AbstractDaoSupport {
   AsyncCount(tableName, request) {
     const sql = ApiSQLStatements.GetCountSelectFromJsonBody(tableName, request);
     return new Promise((resolve, reject) => {
-      this.database.query(sql, (error, result) => {
+      this.db.query(sql, (error, result) => {
         if (error) {
           reject(error);
         }

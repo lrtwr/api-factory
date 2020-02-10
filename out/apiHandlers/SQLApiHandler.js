@@ -55,29 +55,30 @@ var SQLApiHander = /** @class */ (function (_super) {
     function SQLApiHander(dao) {
         var _this = _super.call(this) || this;
         _this.dao = dao;
+        _this.jsnRes = new factory_1.factory.ApiJsonResponse();
         return _this;
     }
     SQLApiHander.prototype.Error = function (error, request, response) {
         var promise = Promise.resolve(error);
-        this.awaitAndRespond(request, response, promise, factory_1.factory.enumApiActions.Error);
+        this.jsnRes.awaitAndRespond(request, response, promise, factory_1.factory.enums.enumApiActions.Error);
     };
     SQLApiHander.prototype.Post = function (tableName, request, response) {
         return __awaiter(this, void 0, void 0, function () {
             var promise;
             return __generator(this, function (_a) {
                 promise = this.dao.AsyncPost(tableName, request);
-                this.awaitAndRespond(request, response, promise, factory_1.factory.enumApiActions.Create);
+                this.jsnRes.awaitAndRespond(request, response, promise, factory_1.factory.enums.enumApiActions.Create);
                 return [2 /*return*/];
             });
         });
     };
     SQLApiHander.prototype.Get = function (tableName, request, response) {
         var promise = this.dao.AsyncGet(tableName, request);
-        this.awaitAndRespond(request, response, promise, factory_1.factory.enumApiActions.Read);
+        this.jsnRes.awaitAndRespond(request, response, promise, factory_1.factory.enums.enumApiActions.Read);
     };
     SQLApiHander.prototype.GetId = function (tableName, request, response) {
         var promise = this.dao.AsyncGetId(tableName, request);
-        this.awaitAndRespond(request, response, promise, factory_1.factory.enumApiActions.Read);
+        this.jsnRes.awaitAndRespond(request, response, promise, factory_1.factory.enums.enumApiActions.Read);
     };
     SQLApiHander.prototype.Put = function (tableName, request, response) {
         this.Post(tableName, request, response);
@@ -90,25 +91,25 @@ var SQLApiHander = /** @class */ (function (_super) {
             var promise;
             return __generator(this, function (_a) {
                 promise = this.dao.AsyncPatchId(tableName, request);
-                this.awaitAndRespond(request, response, promise, factory_1.factory.enumApiActions.Update);
+                this.jsnRes.awaitAndRespond(request, response, promise, factory_1.factory.enums.enumApiActions.Update);
                 return [2 /*return*/];
             });
         });
     };
     SQLApiHander.prototype.DeleteId = function (tableName, request, response) {
         var promise = this.dao.AsyncDeleteId(tableName, request);
-        this.awaitAndRespond(request, response, promise, factory_1.factory.enumApiActions.Delete);
+        this.jsnRes.awaitAndRespond(request, response, promise, factory_1.factory.enums.enumApiActions.Delete);
     };
     SQLApiHander.prototype.ExistId = function (tableName, request, response) {
         var promise = this.dao.AsyncExistId(tableName, request);
-        this.awaitAndRespond(request, response, promise, factory_1.factory.enumApiActions.Delete);
+        this.jsnRes.awaitAndRespond(request, response, promise, factory_1.factory.enums.enumApiActions.Delete);
     };
     SQLApiHander.prototype.GetCount = function (tableName, request, response) {
         var promise = this.dao.AsyncCount(tableName, request);
-        this.awaitAndRespond(request, response, promise, factory_1.factory.enumApiActions.Count);
+        this.jsnRes.awaitAndRespond(request, response, promise, factory_1.factory.enums.enumApiActions.Count);
     };
     SQLApiHander.prototype.Test = function (tableName, request, response) { };
     return SQLApiHander;
-}(factory_1.factory.AbstractApiHandler));
+}(factory_1.factory.abstracts.AbstractApiHandler));
 exports.SQLApiHander = SQLApiHander;
 //# sourceMappingURL=SQLApiHandler.js.map

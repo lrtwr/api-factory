@@ -2,29 +2,32 @@ import { factory } from "../setup/factory";
 import { ApiSQLStatements } from "../setup/ApiSQLStatements";
 
 
-export class SQLApiHander extends factory.AbstractApiHandler {
-  constructor(public dao: factory.AbstractDaoSupport) {
+export class SQLApiHander extends factory.abstracts.AbstractApiHandler 
+{
+  jsnRes: factory.ApiJsonResponse;
+  constructor(public dao: factory.abstracts.AbstractDaoSupport) {
     super();
+    this.jsnRes = new factory.ApiJsonResponse();
   }
 
   Error(error, request, response){
     const promise = Promise.resolve(error);
-    this.awaitAndRespond(request, response, promise, factory.enumApiActions.Error);
+    this.jsnRes.awaitAndRespond(request, response, promise, factory.enums.enumApiActions.Error);
   }
 
   async Post(tableName, request, response) {
     const promise = this.dao.AsyncPost(tableName, request);
-    this.awaitAndRespond(request, response, promise, factory.enumApiActions.Create);
+    this.jsnRes.awaitAndRespond(request, response, promise, factory.enums.enumApiActions.Create);
   }
 
   Get(tableName, request, response) {
     const promise = this.dao.AsyncGet(tableName, request);
-    this.awaitAndRespond(request, response, promise, factory.enumApiActions.Read);
+    this.jsnRes.awaitAndRespond(request, response, promise, factory.enums.enumApiActions.Read);
   }
 
   GetId(tableName, request, response) {
     const promise = this.dao.AsyncGetId(tableName,request);
-    this.awaitAndRespond(request, response, promise, factory.enumApiActions.Read);
+    this.jsnRes.awaitAndRespond(request, response, promise, factory.enums.enumApiActions.Read);
   }
 
   Put(tableName, request, response) {
@@ -37,23 +40,24 @@ export class SQLApiHander extends factory.AbstractApiHandler {
 
   async PatchId(tableName, request, response) {
     const promise = this.dao.AsyncPatchId(tableName, request);
-    this.awaitAndRespond(request, response, promise, factory.enumApiActions.Update);
+    this.jsnRes.awaitAndRespond(request, response, promise, factory.enums.enumApiActions.Update);
   }
 
   DeleteId(tableName, request, response) {
     const promise = this.dao.AsyncDeleteId(tableName, request);
-    this.awaitAndRespond(request, response, promise, factory.enumApiActions.Delete);
+    this.jsnRes.awaitAndRespond(request, response, promise, factory.enums.enumApiActions.Delete);
   }
 
   ExistId(tableName, request, response) {
     const promise = this.dao.AsyncExistId(tableName, request);
-    this.awaitAndRespond(request, response, promise, factory.enumApiActions.Delete);
+    this.jsnRes.awaitAndRespond(request, response, promise, factory.enums.enumApiActions.Delete);
   }
 
   GetCount(tableName, request, response) {
      const promise = this.dao.AsyncCount(tableName, request);
-    this.awaitAndRespond(request, response, promise, factory.enumApiActions.Count);
+    this.jsnRes.awaitAndRespond(request, response, promise, factory.enums.enumApiActions.Count);
   }
 
   Test(tableName, request, response) {}
 }
+
