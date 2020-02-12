@@ -49,7 +49,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var factory_1 = require("../base/factory");
+var factory_1 = require("./factory");
 var SQLApiHander = /** @class */ (function (_super) {
     __extends(SQLApiHander, _super);
     function SQLApiHander(dao) {
