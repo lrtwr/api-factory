@@ -63,7 +63,6 @@ var DaoMSSQL = /** @class */ (function (_super) {
         _this.status = status;
         _this.callback = callback;
         status.DbConnect = enums_1.enumRunningStatus.DbConnectInitializing;
-        console.log("connecting");
         _this.dbConnect();
         return _this;
     }
@@ -95,23 +94,38 @@ var DaoMSSQL = /** @class */ (function (_super) {
             });
         });
     };
-    DaoMSSQL.prototype.AsyncPost = function (tableName, request) {
+    DaoMSSQL.prototype.AsyncInsert = function (answer, sql) {
         var _this = this;
-        var sql = ApiSQLStatements_1.ApiSQLStatements.GetInsertStatement(tableName, this.GetColumnProperties(tableName), request);
         return new Promise(function (resolve, reject) {
             _this.db.query(sql + ";SELECT SCOPE_IDENTITY() as LastID;", function (error, result) {
                 if (error) {
-                    console.log(error);
                     reject(error);
                 }
-                resolve(result.recordset[0].LastID);
-                console.log(result.recordset[0]);
+                answer.createdIds.push(result.recordset[0].LastID);
+                answer.created++;
+                answer.count++;
+                resolve(answer);
+            });
+        });
+    };
+    DaoMSSQL.prototype.AsyncUpdate = function (answer, sql, id) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            _this.db.query(sql, function (error, result) {
+                if (error) {
+                    reject(error);
+                }
+                answer.updatedIds.push(id);
+                answer.updated++;
+                answer.count++;
+                resolve(answer);
             });
         });
     };
     DaoMSSQL.prototype.AsyncDeleteId = function (tableName, request) {
         var _this = this;
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
+        var answer = new factory_1.DaoResult(request);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetDeleteWithIdStatement(tableName, identityColumn, request.params.id);
         return new Promise(function (resolve, reject) {
             _this.db.query(sql, function (error, result) {
@@ -119,13 +133,16 @@ var DaoMSSQL = /** @class */ (function (_super) {
                     console.log(error.message);
                     reject(error);
                 }
-                resolve(result.rowsAffected);
+                answer.deleted = result.rowsAffected;
+                resolve(answer);
             });
         });
     };
+    DaoMSSQL.prototype.AsyncPutId = function (tableName, request) { return this.AsyncPatchId(tableName, request); };
     DaoMSSQL.prototype.AsyncPatchId = function (tableName, request) {
         var _this = this;
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
+        var answer = new factory_1.DaoResult(request);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetUpdateStatement(tableName, identityColumn, this.GetColumnProperties(tableName), request);
         return new Promise(function (resolve, reject) {
             _this.db.query(sql, function (error, result) {
@@ -133,26 +150,33 @@ var DaoMSSQL = /** @class */ (function (_super) {
                     console.log(error.message);
                     reject(error);
                 }
-                resolve(result.rowsAffected);
+                answer.updated = result.rowsAffected;
+                answer.unUsedIds.push(request.params.id);
+                resolve(answer);
             });
         });
     };
     DaoMSSQL.prototype.AsyncGet = function (tableName, request) {
         var _this = this;
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetSelectFromJsonBody(tableName, request);
+        var answer = new factory_1.DaoResult(request);
         return new Promise(function (resolve, reject) {
             _this.db.query(sql, function (error, result) {
                 if (error) {
                     reject(error);
                 }
-                if (result)
-                    resolve(result.recordset);
+                if (result) {
+                    answer.rows = result.recordset;
+                    answer.count = answer.rows.length;
+                }
+                resolve(answer);
             });
         });
     };
     DaoMSSQL.prototype.AsyncExistId = function (tableName, request) {
         var _this = this;
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
+        var answer = new factory_1.DaoResult(request);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetIdExistStatement(tableName, identityColumn, request.params.id);
         return new Promise(function (resolve, reject) {
             _this.db.query(sql, function (error, result) {
@@ -160,34 +184,42 @@ var DaoMSSQL = /** @class */ (function (_super) {
                     reject(error);
                 }
                 if (result)
-                    resolve(result.recordset);
+                    answer.rows = result.recordset;
+                resolve(answer);
             });
         });
     };
     DaoMSSQL.prototype.AsyncGetId = function (tableName, request) {
         var _this = this;
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
+        var answer = new factory_1.DaoResult(request);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetSelectWithIdStatement(tableName, identityColumn, request.params.id);
         return new Promise(function (resolve, reject) {
             _this.db.query(sql, function (error, result) {
                 if (error) {
                     reject(error);
                 }
-                if (result)
-                    resolve(result.recordset);
+                if (result) {
+                    answer.rows = result.recordset;
+                    answer.count = answer.rows.length;
+                }
+                resolve(answer);
             });
         });
     };
     DaoMSSQL.prototype.AsyncCount = function (tableName, request) {
         var _this = this;
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetCountSelectFromJsonBody(tableName, request);
+        var answer = new factory_1.DaoResult(request);
         return new Promise(function (resolve, reject) {
             _this.db.query(sql, function (error, result) {
                 if (error) {
                     reject(error);
                 }
-                if (result)
-                    resolve(result.recordset);
+                if (result) {
+                    answer.count = result.recordset;
+                }
+                resolve(answer);
             });
         });
     };

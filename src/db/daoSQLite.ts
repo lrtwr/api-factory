@@ -1,6 +1,6 @@
 import { ApiSQLStatements } from "../base/ApiSQLStatements";
 import { AbstractDaoSupport } from "../base/abstracts";
-import { RunningStatus, JsonDatabase } from "../base/factory";
+import { RunningStatus, JsonDatabase, DaoResult } from "../base/factory";
 import { enumRunningStatus } from "../base/enums";
 import * as sqlite3 from 'sqlite3';
 
@@ -18,49 +18,64 @@ export class DaoSQLite extends AbstractDaoSupport {
 
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
-    self.db = new sqlite3.Database(self.config.database, error => {
+    this.db = new sqlite3.Database(self.config.database,sqlite3.OPEN_READWRITE, error => {
       if (error) {
         self.status.DbConnect = enumRunningStatus.DbConnectError;
         console.log(error);
         this.server.lastErrors.push(error);
       }
+
     });
-    self.status.DbConnect = enumRunningStatus.DbConnectConnected;
+    // this.db = new sqlite3.Database("./node_modules/apimatic/apitest2.db",sqlite3.OPEN_CREATE | sqlite3.OPEN_READWRITE, error => {
+    //   if (error) {
+    //     self.status.DbConnect = enumRunningStatus.DbConnectError;
+    //     console.log(error);
+    //     this.server.lastErrors.push(error);
+    //   }
+    // });
+    this.status.DbConnect = enumRunningStatus.DbConnectConnected;
     console.log("Connected to SQLite database: " + self.config.database);
     const sql = ApiSQLStatements.GetSQLiteTableColumnInfoStatement();
-    self.db.all(sql, (error, result) => {
-      if(error){
+    this.db.all(sql, (error, result) => {
+      if (error) {
         this.server.lastErrors.push(error);
       }
-      else{
-      self.tableProperties = new JsonDatabase(result, ["table_name", "table_type"]);
-      self.callback(self.server.routing);
-      
+      else {
+        self.tableProperties = new JsonDatabase(result, ["table_name", "table_type"]);
+        self.callback(self.server.routing);
       }
     });
   }
 
-  AsyncPost(tableName, request) {
-    const columnProperties = this.GetColumnProperties(tableName);
-    const sql = ApiSQLStatements.GetInsertStatement(
-      tableName,
-      columnProperties,
-      request
-    );
+
+
+AsyncInsert(answer: DaoResult, sql) {
     return new Promise((resolve, reject) => {
       this.db.run(sql, function (error) {
-        if (error) {
-          console.log(error.message);
-          reject(error);
-        }
-        resolve(`${this.lastID}`);
-        console.log(`lastID ${this.lastID}`);
-      });
-    });
+        if (error) reject(error);
+        answer.createdIds.push(`${this.lastID}`);
+        answer.created++;
+        answer.count++;
+        resolve(answer);
+      })
+    })
+  }
+
+  AsyncUpdate(answer: DaoResult, sql, id) {
+    return new Promise((resolve, reject) => {
+      this.db.run(sql, function (error) {
+        if (error) reject(error);
+        answer.updatedIds.push(id);
+        answer.updated++;
+        answer.count++
+        resolve(answer);
+      })
+    })
   }
 
   AsyncDeleteId(tableName, request) {
     const identityColumn = this.GetPrimarayKeyColumnName(tableName);
+    const answer = new DaoResult(request);
     const sql: string = ApiSQLStatements.GetDeleteWithIdStatement(
       tableName,
       identityColumn,
@@ -72,46 +87,47 @@ export class DaoSQLite extends AbstractDaoSupport {
           console.log(error.message);
           reject(error);
         }
-        resolve(`{result: 1}`);
-        console.log(`result: 1`);
+        answer.deleted++;
+        answer.deletedIds.push(request.params.id);
+        resolve(answer);
       });
     });
   }
 
+  AsyncPutId(tableName, request) {
+    return this.AsyncPatchId(tableName, request);
+  }
+
+
   AsyncPatchId(tableName, request) {
     const identityColumn = this.GetPrimarayKeyColumnName(tableName);
+    const answer = new DaoResult(request);
     const sql = ApiSQLStatements.GetUpdateStatement(
       tableName,
       identityColumn,
       this.GetColumnProperties(tableName),
       request
     );
-    return new Promise((resolve, reject) => {
-      this.db.run(sql, function (error) {
-        if (error) {
-          console.log(error.message);
-          reject(error);
-        }
-        resolve(`1`);
-        console.log(`result: 1`);
-      });
-    });
+    return this.AsyncUpdate(answer, sql, request.params.id);
   }
 
   AsyncGet(tableName, request) {
     const sql = ApiSQLStatements.GetSelectFromJsonBody(tableName, request);
+    const answer = new DaoResult(request);
     return new Promise((resolve, reject) => {
-      this.db.all(sql, function (error, rows) {
+      this.db.all(sql, function (error, result) {
         if (error) {
           reject(error);
         }
-        resolve(rows);
+        answer.rows = result;
+        resolve(answer);
       });
     });
   }
 
   AsyncExistId(tableName, request) {
     const identityColumn = this.GetPrimarayKeyColumnName(tableName);
+    const answer = new DaoResult(request);
     const sql: string = ApiSQLStatements.GetIdExistStatement(
       tableName,
       identityColumn,
@@ -122,13 +138,15 @@ export class DaoSQLite extends AbstractDaoSupport {
         if (error) {
           reject(error);
         }
-        resolve(rows);
+        answer.count=rows;
+        resolve(answer);
       });
     });
   }
 
   AsyncGetId(tableName, request) {
     const identityColumn = this.GetPrimarayKeyColumnName(tableName);
+    const answer = new DaoResult(request);
     const sql: string = ApiSQLStatements.GetSelectWithIdStatement(
       tableName,
       identityColumn,
@@ -139,19 +157,22 @@ export class DaoSQLite extends AbstractDaoSupport {
         if (error) {
           reject(error);
         }
-        resolve(rows);
+        answer.rows = rows;
+        resolve(answer);
       });
     });
   }
 
   AsyncCount(tableName, request) {
     const sql = ApiSQLStatements.GetCountSelectFromJsonBody(tableName, request);
+    const answer = new DaoResult(request);
     return new Promise((resolve, reject) => {
       this.db.all(sql, function (error, rows) {
         if (error) {
           reject(error);
         }
-        resolve(rows);
+        answer.rows=rows;
+        resolve(answer);
       });
     });
   }

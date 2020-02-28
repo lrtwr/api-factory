@@ -15,7 +15,6 @@ var ApiFactoryHandler = /** @class */ (function () {
                 routing.AllTablesApis();
                 routing.FinalizeRouting();
             };
-        console.log("Starting " + server.config.databaseType + " api server");
         switch (server.config.databaseType) {
             case enums_1.enumDatabaseType.MongoDb:
                 return new SQLApiHandler_1.SQLApiHander(new daoMongoDB_1.DaoMongoDB(server, server.config, server.status, callback));

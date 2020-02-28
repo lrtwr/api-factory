@@ -1,8 +1,20 @@
 "use strict";
+//import { defaultMongoLocal } from './ApiFactory';
+//import { ApiMatic } from './ApiFactory';
+//import {$$} from './ApiFactory';
 Object.defineProperty(exports, "__esModule", { value: true });
-var api = require("./ApiFactory");
-api.Connect(api.defaultMSSQL);
-api.Connect(api.defaultMariaDB);
-api.Connect(api.defaultMongoExtern1);
-api.Connect(api.defaultSQLite);
+// const $$ = require("./ApiFactory")
+var $$ = require("./ApiFactory");
+// $$.Connect($$.jalSQLite);
+// $$.Connect($$.jalMariaDB);
+// $$.Connect($$.jalMySQL);
+///$$.Connect($$.jalMSSQL);
+// $$.Connect($$.mongoExtern1);
+// $$.Connect($$.mongoExtern2);
+//$$.Connect($$.jalMongo);
+// $$.Connect($$.JALDEVELOPMariaDB);
+//$$.Connect($$.JALDEVELOPMySQL);
+// $$.Connect($$.JALDEVELOPMSSQL);
+$$.Connect($$.JALDEVELOPMongo);
+// $$.Connect();
 //# sourceMappingURL=index.js.map

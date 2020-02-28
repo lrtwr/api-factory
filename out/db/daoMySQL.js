@@ -59,24 +59,38 @@ var DaoMySQL = /** @class */ (function (_super) {
         });
         return _this;
     }
-    DaoMySQL.prototype.AsyncPost = function (tableName, request) {
+    DaoMySQL.prototype.AsyncInsert = function (answer, sql) {
         var _this = this;
-        var columnProperties = this.GetColumnProperties(tableName);
-        var sql = ApiSQLStatements_1.ApiSQLStatements.GetInsertStatement(tableName, columnProperties, request);
         return new Promise(function (resolve, reject) {
             _this.db.query(sql, function (error, result) {
                 if (error) {
-                    console.log(error.message);
                     reject(error);
                 }
-                resolve("" + result.insertId);
-                console.log("lastID " + result.insertId);
+                answer.createdIds.push(result.insertId);
+                answer.created++;
+                answer.count++;
+                resolve(answer);
+            });
+        });
+    };
+    DaoMySQL.prototype.AsyncUpdate = function (answer, sql, id) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            _this.db.query(sql, function (error, result) {
+                if (error) {
+                    reject(error);
+                }
+                answer.updatedIds.push(id);
+                answer.updated++;
+                answer.count++;
+                resolve(answer);
             });
         });
     };
     DaoMySQL.prototype.AsyncDeleteId = function (tableName, request) {
         var _this = this;
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
+        var answer = new factory_1.DaoResult(request);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetDeleteWithIdStatement(tableName, identityColumn, request.params.id);
         return new Promise(function (resolve, reject) {
             _this.db.query(sql, function (error) {
@@ -84,14 +98,17 @@ var DaoMySQL = /** @class */ (function (_super) {
                     console.log(error.message);
                     reject(error);
                 }
-                resolve("1");
-                console.log("1 updated");
+                answer.deleted++;
+                answer.deletedIds.push(request.params.id);
+                resolve(answer);
             });
         });
     };
+    DaoMySQL.prototype.AsyncPutId = function (tableName, request) { return this.AsyncPatchId(tableName, request); };
     DaoMySQL.prototype.AsyncPatchId = function (tableName, request) {
         var _this = this;
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
+        var answer = new factory_1.DaoResult(request);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetUpdateStatement(tableName, identityColumn, this.GetColumnProperties(tableName), request);
         return new Promise(function (resolve, reject) {
             _this.db.query(sql, function (error) {
@@ -99,59 +116,70 @@ var DaoMySQL = /** @class */ (function (_super) {
                     console.log(error.message);
                     reject(error);
                 }
-                resolve("1");
-                console.log("1 updated");
+                answer.updated++;
+                answer.updatedIds.push(request.params.id);
+                resolve(answer);
             });
         });
     };
     DaoMySQL.prototype.AsyncGet = function (tableName, request) {
         var _this = this;
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetSelectFromJsonBody(tableName, request);
+        var answer = new factory_1.DaoResult(request);
         return new Promise(function (resolve, reject) {
             _this.db.query(sql, function (error, result) {
                 if (error) {
                     reject(error);
                 }
-                resolve(result);
+                answer.rows = result;
+                answer.count = answer.rows.length;
+                resolve(answer);
             });
         });
     };
     DaoMySQL.prototype.AsyncExistId = function (tableName, request) {
         var _this = this;
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
+        var answer = new factory_1.DaoResult(request);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetIdExistStatement(tableName, identityColumn, request.params.id);
         return new Promise(function (resolve, reject) {
             _this.db.query(sql, function (error, result) {
                 if (error) {
                     reject(error);
                 }
-                resolve(result);
+                answer.count = result;
+                resolve(answer);
             });
         });
     };
     DaoMySQL.prototype.AsyncGetId = function (tableName, request) {
         var _this = this;
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
+        var answer = new factory_1.DaoResult(request);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetSelectWithIdStatement(tableName, identityColumn, request.params.id);
         return new Promise(function (resolve, reject) {
             _this.db.query(sql, function (error, result) {
                 if (error) {
                     reject(error);
                 }
-                resolve(result);
+                answer.rows = result;
+                answer.count = answer.rows.length;
+                resolve(answer);
             });
         });
     };
     DaoMySQL.prototype.AsyncCount = function (tableName, request) {
         var _this = this;
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetCountSelectFromJsonBody(tableName, request);
+        var answer = new factory_1.DaoResult(request);
         return new Promise(function (resolve, reject) {
             _this.db.query(sql, function (error, result) {
                 if (error) {
                     reject(error);
                 }
                 if (result)
-                    resolve(result);
+                    answer.count = result;
+                resolve(answer);
             });
         });
     };

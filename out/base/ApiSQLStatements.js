@@ -72,6 +72,36 @@ var ApiSQLStatements = /** @class */ (function () {
             orderPart = " order by " + order;
         return (selectPart + wherePart + orderPart).trim() + ";";
     };
+    ApiSQLStatements.GetUpdateFromBodyStatement = function (tableName, identityColumn, tableColumnProperties, updateInfo) {
+        var sql = "Update " + tableName + " Set ";
+        var setArray = [];
+        for (var i = 0; i < tableColumnProperties.length; i++) {
+            var prop = tableColumnProperties[i];
+            if (updateInfo[prop.column_name] != null) {
+                if (prop.column_is_pk == 0) {
+                    setArray.push(prop.column_name + " = ");
+                    switch (prop.data_type) {
+                        case "TEXT":
+                        case "NVARCHAR":
+                        case "VARCHAR":
+                            setArray[setArray.length - 1] +=
+                                "'" + updateInfo[prop.column_name] + "'";
+                            break;
+                        case "INTEGER":
+                        case "REAL":
+                        case "NUMERIC":
+                        case "INT":
+                        case "BIGINT":
+                            setArray[setArray.length - 1] += updateInfo[prop.column_name];
+                            break;
+                    }
+                }
+            }
+        }
+        return (sql +
+            setArray.join(", ") +
+            (" Where " + identityColumn + "=" + updateInfo[identityColumn]));
+    };
     ApiSQLStatements.GetUpdateStatement = function (tableName, identityColumn, tableColumnProperties, request) {
         var sql = "Update " + tableName + " Set ";
         var setArray = [];
@@ -102,6 +132,39 @@ var ApiSQLStatements = /** @class */ (function () {
         return (sql +
             setArray.join(", ") +
             (" Where " + identityColumn + "=" + request.params.id));
+    };
+    ApiSQLStatements.GetInsertFromBodyStatement = function (tableName, columnProperties, insertInfo) {
+        var sql = "Insert into " + tableName + " ";
+        var asqlColumns = [];
+        var asqlValues = [];
+        for (var i = 0; i < columnProperties.length; i++) {
+            var prop = columnProperties[i];
+            if (insertInfo[prop.column_name] != null) {
+                if (prop.column_is_pk == 0) {
+                    asqlColumns.push(prop.column_name);
+                    switch (prop.data_type) {
+                        case "TEXT":
+                        case "NVARCHAR":
+                        case "VARCHAR":
+                            asqlValues.push("'" + insertInfo[prop.column_name] + "'");
+                            break;
+                        case "INTEGER":
+                        case "REAL":
+                        case "NUMERIC":
+                        case "INT":
+                        case "BIGINT":
+                            asqlValues.push(insertInfo[prop.column_name]);
+                            break;
+                    }
+                }
+            }
+        }
+        return (sql +
+            "(" +
+            asqlColumns.join(", ") +
+            ") Values (" +
+            asqlValues.join(", ") +
+            ")");
     };
     ApiSQLStatements.GetInsertStatement = function (tableName, columnProperties, request) {
         var sql = "Insert into " + tableName + " ";

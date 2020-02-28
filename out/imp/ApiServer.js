@@ -44,7 +44,25 @@ var factory_1 = require("../base/factory");
 var enums_1 = require("../base/enums");
 var ApiRouting_2 = require("./ApiRouting");
 exports.ApiRouting = ApiRouting_2.ApiRouting;
+// const cors = require('cors');
+// const helmet = require('helmet');
+// const jwt = require('express-jwt');
+// const jwtAuthz = require('express-jwt-authz');
+var jwks = require('jwks-rsa');
+//npm install --save express-jwt jwks-rsa express-jwt-authz
+// const checkJwt = jwt({
+//     secret: jwks.expressJwtSecret({
+//         cache: true,
+//         rateLimit: true,
+//         jwksRequestsPerMinute: 5,
+//         jwksUri: 'https://dev-x90ce4d0.eu.auth0.com/.well-known/jwks.json'
+//   }),
+//   audience: 'https://localhost:6800',
+//   issuer: 'https://dev-x90ce4d0.eu.auth0.com/',
+//   algorithms: ['RS256']
+// });
 var ApiServer = /** @class */ (function () {
+    //ads = [ {title: 'Hello, world (again)!'} ];
     function ApiServer(config, callback) {
         var _this = this;
         this.config = config;
@@ -57,22 +75,24 @@ var ApiServer = /** @class */ (function () {
                 return [2 /*return*/];
             });
         }); };
-        console.log("Starting api server.");
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         var self = this;
         this.app = Express();
+        // this.app.use(helmet());
         this.app.use(BodyParser.json());
         this.app.use(BodyParser.urlencoded({ extended: true }));
         this.app.use(this.jsonErrorHandler);
+        // this.app.use(cors());
+        // this.app.use(checkJwt);
         this.status = new factory_1.RunningStatus(enums_1.enumRunningStatus.Down, enums_1.enumRunningStatus.Down, enums_1.enumRunningStatus.Down);
-        if (!this.config)
+        if (!this.config) {
             console.log("Empty configuration is given!");
+        }
         this.status.ApiServer = enums_1.enumRunningStatus.ApiServerInitializing;
         var api = this.app
             .listen(this.config.listenPort, function () {
-            console.log("Server is started at url:" +
-                api.address().address +
-                " port: " +
+            console.log(_this.config.databaseType.toString() +
+                " is started at port:" +
                 api.address().port);
             _this.status.ApiServer = enums_1.enumRunningStatus.ApiServerUp;
         })
@@ -86,6 +106,12 @@ var ApiServer = /** @class */ (function () {
                 console.log(error);
             }
         });
+        // this.app.get('/ads', (req, res) => {
+        //   res.send(this.ads);
+        // });
+        //   this.app.get('/authorized',checkJwt, function (req, res) {
+        //     res.send('Secured Resource');
+        // });
         this.routing = new ApiRouting_1.ApiRouting(this);
         this.dbHandler = daoSupport_1.ApiFactoryHandler.GetDbApiHandler(this, callback);
     }

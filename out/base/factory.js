@@ -36,6 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+//import { DynamicObject } from './factory';
 var enums_1 = require("./enums");
 var AObject = /** @class */ (function () {
     function AObject(oArray, aProp) {
@@ -101,30 +102,23 @@ var JsonDatabase = /** @class */ (function () {
 }());
 exports.JsonDatabase = JsonDatabase;
 var DaoResult = /** @class */ (function () {
-    function DaoResult(rows, updated, deleted, count, created, lastId, error) {
-        this.rows = rows;
-        this.updated = updated;
-        this.deleted = deleted;
-        this.count = count;
-        this.created = created;
-        this.lastId = lastId;
-        this.error = error;
-        this.exists = 0;
-        if (!rows)
-            this.rows = [];
-        if (!updated)
-            this.updated = 0;
-        if (!deleted)
-            this.deleted = 0;
-        if (!count)
-            this.count = 0;
-        this.exists = this.count;
-        if (!created)
-            this.created = 0;
-        if (!lastId)
-            this.lastId = 0;
-        if (!error)
-            this.error = {};
+    function DaoResult(request) {
+        var _this = this;
+        this.rows = [];
+        this.count = 0;
+        this.created = 0;
+        this.updated = 0;
+        this.deleted = 0;
+        this.updatedIds = [];
+        this.createdIds = [];
+        this.deletedIds = [];
+        this.unUsedBodies = [];
+        this.unUsedIds = [];
+        this.message = "";
+        this.method = "GET";
+        this.exists = function () { _this.count > 0 ? 1 : 0; };
+        if (request)
+            this.method = request.method;
     }
     return DaoResult;
 }());
@@ -159,44 +153,69 @@ var ApiJsonResponse = /** @class */ (function () {
                                 response.status(201);
                                 break;
                         }
-                        result = new DaoResult();
-                        if (id)
-                            result.lastId = id;
-                        switch (apiAction) {
-                            case enums_1.enumApiActions.Error:
-                                errResponse = {};
-                                errResponse["message"] = answer["message"];
-                                errResponse["expose"] = answer["expose"];
-                                errResponse["statusCode"] = answer["statusCode"];
-                                errResponse["status"] = answer["status"];
-                                errResponse["body"] = answer["body"];
-                                errResponse["type"] = answer["type"];
-                                errResponse["stack"] = answer["stack"];
-                                result.error = errResponse;
-                                break;
-                            case enums_1.enumApiActions.Read:
-                                result.rows = answer;
-                                if (result.rows.length)
-                                    result.count = result.rows.length;
-                                break;
-                            case enums_1.enumApiActions.Count:
-                                result.count = answer[0].count;
-                                break;
-                            case enums_1.enumApiActions.Create:
-                                result.lastId = answer;
-                                if (result.lastId)
-                                    result.created = 1;
-                                result.count = 1;
-                                break;
-                            case enums_1.enumApiActions.Update:
-                                result.updated = answer[0];
-                                result.count = answer[0];
-                                break;
-                            case enums_1.enumApiActions.Delete:
-                                result.deleted = answer[0];
-                                break;
+                        if (answer instanceof Array) {
+                            if (answer.length > 0) {
+                                if (answer[0] instanceof DaoResult) {
+                                    result = answer[0];
+                                }
+                            }
                         }
-                        result.exists = result.count >= 1 ? 1 : 0;
+                        if (answer instanceof DaoResult)
+                            result = answer;
+                        if (!result) {
+                            result = new DaoResult();
+                            switch (apiAction) {
+                                case enums_1.enumApiActions.Error:
+                                    errResponse = {};
+                                    errResponse["message"] = answer["message"];
+                                    errResponse["expose"] = answer["expose"];
+                                    errResponse["statusCode"] = answer["statusCode"];
+                                    errResponse["status"] = answer["status"];
+                                    errResponse["body"] = answer["body"];
+                                    errResponse["type"] = answer["type"];
+                                    errResponse["stack"] = answer["stack"];
+                                    result.error = errResponse;
+                                    break;
+                                case enums_1.enumApiActions.Read:
+                                    result.rows = answer;
+                                    if (result.rows.length)
+                                        result.count = result.rows.length;
+                                    break;
+                                case enums_1.enumApiActions.Count:
+                                    result.count = answer[0].count;
+                                    break;
+                                case enums_1.enumApiActions.Create:
+                                    if (id)
+                                        result.createdIds.push(id);
+                                    if (answer instanceof Array) {
+                                        result.createdIds = answer;
+                                        if (result.createdIds)
+                                            result.created = answer.length;
+                                        result.count = answer.length;
+                                    }
+                                    else {
+                                        result.createdIds.push(answer);
+                                        result.created = result.createdIds.length > 0 ? 1 : 0;
+                                        result.count = 1;
+                                    }
+                                    break;
+                                case enums_1.enumApiActions.Update:
+                                    if (id)
+                                        result.updatedIds.push(id);
+                                    if (answer instanceof Array) {
+                                        result.updatedIds = answer;
+                                        result.count = answer.length;
+                                    }
+                                    else {
+                                        result.updated = answer[0];
+                                        result.count = answer[0];
+                                    }
+                                    break;
+                                case enums_1.enumApiActions.Delete:
+                                    result.deleted = answer[0];
+                                    break;
+                            }
+                        }
                         response.json(result);
                         return [2 /*return*/];
                 }

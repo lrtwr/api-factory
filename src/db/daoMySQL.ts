@@ -1,7 +1,7 @@
 import * as mysql from "mysql";
 import { ApiSQLStatements } from "../base/ApiSQLStatements";
 import { AbstractDaoSupport } from "../base/abstracts";
-import { RunningStatus, JsonDatabase } from "../base/factory";
+import { RunningStatus, JsonDatabase, DaoResult } from "../base/factory";
 import { enumRunningStatus } from "../base/enums";
 
 
@@ -49,27 +49,37 @@ export class DaoMySQL extends AbstractDaoSupport {
     });
   }
 
-  AsyncPost(tableName, request) {
-    const columnProperties = this.GetColumnProperties(tableName);
-    const sql = ApiSQLStatements.GetInsertStatement(
-      tableName,
-      columnProperties,
-      request
-    );
+  AsyncInsert(answer: DaoResult, sql) {
     return new Promise((resolve, reject) => {
-      this.db.query(sql, function(error, result) {
+      this.db.query(sql, function (error, result) {
         if (error) {
-          console.log(error.message);
           reject(error);
         }
-        resolve(`${result.insertId}`);
-        console.log(`lastID ${result.insertId}`);
+        answer.createdIds.push(result.insertId);
+        answer.created++;
+        answer.count++
+        resolve(answer);
       });
-    });
+    })
+  }
+
+  AsyncUpdate(answer: DaoResult, sql, id) {
+    return new Promise((resolve, reject) => {
+      this.db.query(sql, function (error, result) {
+        if (error) {
+          reject(error);
+        }
+        answer.updatedIds.push(id);
+        answer.updated++;
+        answer.count++
+        resolve(answer);
+      });
+    })
   }
 
   AsyncDeleteId(tableName, request) {
     const identityColumn = this.GetPrimarayKeyColumnName(tableName);
+    const answer = new DaoResult(request);
     const sql: string = ApiSQLStatements.GetDeleteWithIdStatement(
       tableName,
       identityColumn,
@@ -81,14 +91,18 @@ export class DaoMySQL extends AbstractDaoSupport {
           console.log(error.message);
           reject(error);
         }
-        resolve(`1`);
-        console.log(`1 updated`);
+        answer.deleted++;
+        answer.deletedIds.push(request.params.id);
+        resolve(answer);
       });
     });
   }
 
+  AsyncPutId(tableName, request) {return this.AsyncPatchId(tableName, request)}
+
   AsyncPatchId(tableName, request) {
     const identityColumn = this.GetPrimarayKeyColumnName(tableName);
+    const answer = new DaoResult(request);
     const sql = ApiSQLStatements.GetUpdateStatement(
       tableName,
       identityColumn,
@@ -101,26 +115,31 @@ export class DaoMySQL extends AbstractDaoSupport {
           console.log(error.message);
           reject(error);
         }
-        resolve(`1`);
-        console.log(`1 updated`);
+        answer.updated++;
+        answer.updatedIds.push(request.params.id);
+        resolve(answer);
       });
     });
   }
 
   AsyncGet(tableName, request) {
     const sql = ApiSQLStatements.GetSelectFromJsonBody(tableName, request);
+    const answer = new DaoResult(request);
     return new Promise((resolve, reject) => {
       this.db.query(sql, (error, result) => {
         if (error) {
           reject(error);
         }
-        resolve(result);
+        answer.rows = result;
+        answer.count= answer.rows.length;
+        resolve(answer);
       });
     });
   }
 
   AsyncExistId(tableName, request) {
     const identityColumn = this.GetPrimarayKeyColumnName(tableName);
+    const answer = new DaoResult(request);
     const sql: string = ApiSQLStatements.GetIdExistStatement(
       tableName,
       identityColumn,
@@ -131,13 +150,15 @@ export class DaoMySQL extends AbstractDaoSupport {
         if (error) {
           reject(error);
         }
-        resolve(result);
+        answer.count=result;
+        resolve(answer);
       });
     });
   }
 
   AsyncGetId(tableName, request) {
     const identityColumn = this.GetPrimarayKeyColumnName(tableName);
+    const answer = new DaoResult(request);
     const sql: string = ApiSQLStatements.GetSelectWithIdStatement(
       tableName,
       identityColumn,
@@ -148,19 +169,23 @@ export class DaoMySQL extends AbstractDaoSupport {
         if (error) {
           reject(error);
         }
-        resolve(result);
+        answer.rows=result;
+        answer.count=answer.rows.length;
+        resolve(answer);
       });
     });
   }
 
   AsyncCount(tableName, request) {
     const sql = ApiSQLStatements.GetCountSelectFromJsonBody(tableName, request);
+    const answer = new DaoResult(request);
     return new Promise((resolve, reject) => {
       this.db.query(sql, (error, result) => {
         if (error) {
           reject(error);
         }
-        if (result) resolve(result);
+        if (result) answer.count =result;
+        resolve(answer);
       });
     });
   }

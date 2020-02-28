@@ -1,6 +1,21 @@
-import * as api from './ApiFactory';
+//import { defaultMongoLocal } from './ApiFactory';
+//import { ApiMatic } from './ApiFactory';
+//import {$$} from './ApiFactory';
 
-api.Connect(api.defaultMSSQL);
-api.Connect(api.defaultMariaDB);
-api.Connect(api.defaultMongoExtern1);
-api.Connect(api.defaultSQLite);
+// const $$ = require("./ApiFactory")
+import  * as $$ from "./ApiFactory"
+
+// $$.Connect($$.jalSQLite);
+// $$.Connect($$.jalMariaDB);
+// $$.Connect($$.jalMySQL);
+///$$.Connect($$.jalMSSQL);
+
+// $$.Connect($$.mongoExtern1);
+// $$.Connect($$.mongoExtern2);
+//$$.Connect($$.jalMongo);
+// $$.Connect($$.JALDEVELOPMariaDB);
+//$$.Connect($$.JALDEVELOPMySQL);
+// $$.Connect($$.JALDEVELOPMSSQL);
+$$.Connect($$.JALDEVELOPMongo);
+// $$.Connect();
+

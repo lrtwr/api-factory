@@ -1,7 +1,21 @@
+//import { DynamicObject } from './factory';
 import { enumApiActions, enumDatabaseType, enumRunningStatus } from './enums';
 
+// Dynamic object TS
+// const a: DynamicObject = {};
+// a[ "propname"] = anyValue;
 export interface DynamicObject {
   [k: string]: any;
+}
+
+// Unused SQLColumnPropertyDefinition
+// maybe later
+export interface ColumnDef {
+  table_name: string,
+  column_name: string,
+  table_type: string,
+  data_type: string,
+  column_is_pk: number
 }
 
 export class AObject {
@@ -70,25 +84,27 @@ export class JsonDatabase {
 }
 
 export class DaoResult {
-  public exists = 0;
-  constructor(
-    public rows?: Array<any>,
-    public updated?: number,
-    public deleted?: number,
-    public count?: number,
-    public created?: number,
-    public lastId?: any,
-    public error?: any
-  ) {
-    if (!rows) this.rows = [];
-    if (!updated) this.updated = 0;
-    if (!deleted) this.deleted = 0;
-    if (!count) this.count = 0;
-    this.exists = this.count;
-    if (!created) this.created = 0;
-    if (!lastId) this.lastId = 0;
-    if (!error) this.error = {};
+  public rows: Array<any> = [];
+  public count = 0;
+  public created = 0;
+  public updated: number = 0;
+  public deleted: number = 0;
+  public updatedIds: string[] = [];
+  public createdIds: string[] = [];
+  public deletedIds: string[] = [];
+  public error: any;
+  public unUsedBodies: any[] = [];
+  public unUsedIds: string[] = [];
+  public message = "";
+
+  public method: string = "GET";
+
+  constructor( request?: Request ) {
+    if(request) this.method = request.method;
   }
+
+  public exists = () => { this.count > 0 ? 1 : 0 ; }
+  
 }
 
 export class ApiJsonResponse {
@@ -104,7 +120,7 @@ export class ApiJsonResponse {
         id = request.params.id;
       }
     }
-    const answer = await promise;
+    var answer = await promise;
     switch (apiAction) {
       case enumApiActions.Error:
         response.status(answer.status);
@@ -118,41 +134,64 @@ export class ApiJsonResponse {
         response.status(201);
         break;
     }
-    const result = new DaoResult();
-    if (id) result.lastId = id;
-    switch (apiAction) {
-      case enumApiActions.Error:
-        const errResponse: { [k: string]: any } = {};
-        errResponse["message"] = answer["message"];
-        errResponse["expose"] = answer["expose"];
-        errResponse["statusCode"] = answer["statusCode"];
-        errResponse["status"] = answer["status"];
-        errResponse["body"] = answer["body"];
-        errResponse["type"] = answer["type"];
-        errResponse["stack"] = answer["stack"];
-        result.error = errResponse;
-        break;
-      case enumApiActions.Read:
-        result.rows = answer;
-        if (result.rows.length) result.count = result.rows.length;
-        break;
-      case enumApiActions.Count:
-        result.count = answer[0].count;
-        break;
-      case enumApiActions.Create:
-        result.lastId = answer;
-        if (result.lastId) result.created = 1;
-        result.count = 1;
-        break;
-      case enumApiActions.Update:
-        result.updated = answer[0];
-        result.count = answer[0];
-        break;
-      case enumApiActions.Delete:
-        result.deleted = answer[0];
-        break;
+    var result : DaoResult;
+    if (answer instanceof Array){
+      if (answer.length > 0 ) {
+        if (answer[0] instanceof DaoResult) { result = answer[0];}
+      }
     }
-    result.exists = result.count >= 1 ? 1 : 0;
+    if (answer instanceof DaoResult ) result = answer;
+
+    if (!result) {
+      result = new DaoResult();
+      switch (apiAction) {
+        case enumApiActions.Error:
+          const errResponse: { [k: string]: any } = {};
+          errResponse["message"] = answer["message"];
+          errResponse["expose"] = answer["expose"];
+          errResponse["statusCode"] = answer["statusCode"];
+          errResponse["status"] = answer["status"];
+          errResponse["body"] = answer["body"];
+          errResponse["type"] = answer["type"];
+          errResponse["stack"] = answer["stack"];
+          result.error = errResponse;
+          break;
+        case enumApiActions.Read:
+          result.rows = answer;
+          if (result.rows.length) result.count = result.rows.length;
+          break;
+        case enumApiActions.Count:
+          result.count = answer[0].count;
+          break;
+        case enumApiActions.Create:
+          if (id) result.createdIds.push(id);
+          if (answer instanceof Array) {
+            result.createdIds = answer;
+            if (result.createdIds) result.created = answer.length;
+            result.count = answer.length;
+          }
+          else {
+            result.createdIds.push(answer);
+            result.created = result.createdIds.length>0?1:0;
+            result.count = 1;
+          }
+          break;
+        case enumApiActions.Update:
+          if (id) result.updatedIds.push(id);
+          if (answer instanceof Array) {
+            result.updatedIds = answer;
+            result.count = answer.length;
+          }
+          else {
+            result.updated = answer[0];
+            result.count = answer[0];
+          }
+          break;
+        case enumApiActions.Delete:
+          result.deleted = answer[0];
+          break;
+      }
+    }
     response.json(result);
   }
 }

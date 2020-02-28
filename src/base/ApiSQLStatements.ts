@@ -113,6 +113,47 @@ n.table_type,
     if (order) orderPart = ` order by ${order}`;
     return (selectPart + wherePart + orderPart).trim() + ";";
   }
+ 
+  static GetUpdateFromBodyStatement( 
+    tableName,
+    identityColumn,
+    tableColumnProperties,
+    updateInfo
+    ){
+      
+    const sql = `Update ${tableName} Set `;
+    const setArray = [];
+  
+
+    for (let i = 0; i < tableColumnProperties.length; i++) {
+      const prop = tableColumnProperties[i];
+      if (updateInfo[prop.column_name] != null) {
+        if (prop.column_is_pk == 0) {
+          setArray.push(prop.column_name + " = ");
+          switch (prop.data_type) {
+            case "TEXT":
+            case "NVARCHAR":
+            case "VARCHAR":
+              setArray[setArray.length - 1] +=
+                "'" + updateInfo[prop.column_name] + "'";
+              break;
+            case "INTEGER":
+            case "REAL":
+            case "NUMERIC":
+            case "INT":
+            case "BIGINT":
+              setArray[setArray.length - 1] += updateInfo[prop.column_name];
+              break;
+          }
+        }
+      }
+    }
+    return (
+      sql +
+      setArray.join(", ") +
+      ` Where ${identityColumn}=${updateInfo[identityColumn]}`
+    );
+    }
 
   static GetUpdateStatement(
     tableName,
@@ -154,6 +195,42 @@ n.table_type,
     );
   }
 
+  static GetInsertFromBodyStatement(tableName, columnProperties, insertInfo) {
+    const sql = `Insert into ${tableName} `;
+    const asqlColumns = [];
+    const asqlValues = [];
+
+    for (let i = 0; i < columnProperties.length; i++) {
+      const prop = columnProperties[i];
+      if (insertInfo[prop.column_name] != null) {
+        if (prop.column_is_pk == 0) {
+          asqlColumns.push(prop.column_name);
+          switch (prop.data_type) {
+            case "TEXT":
+            case "NVARCHAR":
+            case "VARCHAR":
+              asqlValues.push("'" + insertInfo[prop.column_name] + "'");
+              break;
+            case "INTEGER":
+            case "REAL":
+            case "NUMERIC":
+            case "INT":
+            case "BIGINT":
+              asqlValues.push(insertInfo[prop.column_name]);
+              break;
+          }
+        }
+      }
+    }
+    return (
+      sql +
+      "(" +
+      asqlColumns.join(", ") +
+      ") Values (" +
+      asqlValues.join(", ") +
+      ")"
+    );
+  }
   static GetInsertStatement(tableName, columnProperties, request) {
     const sql = `Insert into ${tableName} `;
     const asqlColumns = [];

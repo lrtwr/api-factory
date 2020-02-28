@@ -2,7 +2,6 @@ import { AbstractApiHandler, AbstractDaoSupport } from "./abstracts";
 import { enumApiActions } from "./enums";
 import { ApiJsonResponse } from "./factory";
 
-
 export class SQLApiHander extends AbstractApiHandler 
 {
   jsnRes: ApiJsonResponse;
@@ -16,7 +15,7 @@ export class SQLApiHander extends AbstractApiHandler
     this.jsnRes.awaitAndRespond(request, response, promise, enumApiActions.Error);
   }
 
-  async Post(tableName: any, request: any, response: any) {
+  Post(tableName: any, request: any, response: any) {
     const promise = this.dao.AsyncPost(tableName, request);
     this.jsnRes.awaitAndRespond(request, response, promise, enumApiActions.Create);
   }
@@ -32,15 +31,22 @@ export class SQLApiHander extends AbstractApiHandler
   }
 
   Put(tableName: any, request: any, response: any) {
-    this.Post(tableName, request, response);
+    const promise = this.dao.AsyncPut(tableName, request);
+    this.jsnRes.awaitAndRespond(request, response, promise, enumApiActions.Update);
   }
 
   PutId(tableName: any, request: any, response: any) {
-    this.PatchId(tableName, request, response);
+    const promise = this.dao.AsyncPut(tableName, request);
+    this.jsnRes.awaitAndRespond(request, response, promise, enumApiActions.Update);
   }
 
-  async PatchId(tableName: any, request: any, response: any) {
+  PatchId(tableName: any, request: any, response: any) {
     const promise = this.dao.AsyncPatchId(tableName, request);
+    this.jsnRes.awaitAndRespond(request, response, promise, enumApiActions.Update);
+  }
+
+  Patch(tableName: any, request: any, response: any) {
+    const promise = this.dao.AsyncPatch(tableName, request);
     this.jsnRes.awaitAndRespond(request, response, promise, enumApiActions.Update);
   }
 
@@ -51,7 +57,7 @@ export class SQLApiHander extends AbstractApiHandler
 
   ExistId(tableName: any, request: any, response: any) {
     const promise = this.dao.AsyncExistId(tableName, request);
-    this.jsnRes.awaitAndRespond(request, response, promise, enumApiActions.Delete);
+    this.jsnRes.awaitAndRespond(request, response, promise, enumApiActions.Read);
   }
 
   GetCount(tableName: any, request: any, response: any) {

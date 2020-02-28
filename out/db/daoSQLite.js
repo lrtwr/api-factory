@@ -30,17 +30,24 @@ var DaoSQLite = /** @class */ (function (_super) {
         status.DbConnect = enums_1.enumRunningStatus.DbConnectInitializing;
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         var self = _this;
-        self.db = new sqlite3.Database(self.config.database, function (error) {
+        _this.db = new sqlite3.Database(self.config.database, sqlite3.OPEN_READWRITE, function (error) {
             if (error) {
                 self.status.DbConnect = enums_1.enumRunningStatus.DbConnectError;
                 console.log(error);
                 _this.server.lastErrors.push(error);
             }
         });
-        self.status.DbConnect = enums_1.enumRunningStatus.DbConnectConnected;
+        // this.db = new sqlite3.Database("./node_modules/apimatic/apitest2.db",sqlite3.OPEN_CREATE | sqlite3.OPEN_READWRITE, error => {
+        //   if (error) {
+        //     self.status.DbConnect = enumRunningStatus.DbConnectError;
+        //     console.log(error);
+        //     this.server.lastErrors.push(error);
+        //   }
+        // });
+        _this.status.DbConnect = enums_1.enumRunningStatus.DbConnectConnected;
         console.log("Connected to SQLite database: " + self.config.database);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetSQLiteTableColumnInfoStatement();
-        self.db.all(sql, function (error, result) {
+        _this.db.all(sql, function (error, result) {
             if (error) {
                 _this.server.lastErrors.push(error);
             }
@@ -51,24 +58,36 @@ var DaoSQLite = /** @class */ (function (_super) {
         });
         return _this;
     }
-    DaoSQLite.prototype.AsyncPost = function (tableName, request) {
+    DaoSQLite.prototype.AsyncInsert = function (answer, sql) {
         var _this = this;
-        var columnProperties = this.GetColumnProperties(tableName);
-        var sql = ApiSQLStatements_1.ApiSQLStatements.GetInsertStatement(tableName, columnProperties, request);
         return new Promise(function (resolve, reject) {
             _this.db.run(sql, function (error) {
-                if (error) {
-                    console.log(error.message);
+                if (error)
                     reject(error);
-                }
-                resolve("" + this.lastID);
-                console.log("lastID " + this.lastID);
+                answer.createdIds.push("" + this.lastID);
+                answer.created++;
+                answer.count++;
+                resolve(answer);
+            });
+        });
+    };
+    DaoSQLite.prototype.AsyncUpdate = function (answer, sql, id) {
+        var _this = this;
+        return new Promise(function (resolve, reject) {
+            _this.db.run(sql, function (error) {
+                if (error)
+                    reject(error);
+                answer.updatedIds.push(id);
+                answer.updated++;
+                answer.count++;
+                resolve(answer);
             });
         });
     };
     DaoSQLite.prototype.AsyncDeleteId = function (tableName, request) {
         var _this = this;
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
+        var answer = new factory_1.DaoResult(request);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetDeleteWithIdStatement(tableName, identityColumn, request.params.id);
         return new Promise(function (resolve, reject) {
             _this.db.run(sql, function (error) {
@@ -76,73 +95,76 @@ var DaoSQLite = /** @class */ (function (_super) {
                     console.log(error.message);
                     reject(error);
                 }
-                resolve("{result: 1}");
-                console.log("result: 1");
+                answer.deleted++;
+                answer.deletedIds.push(request.params.id);
+                resolve(answer);
             });
         });
     };
+    DaoSQLite.prototype.AsyncPutId = function (tableName, request) {
+        return this.AsyncPatchId(tableName, request);
+    };
     DaoSQLite.prototype.AsyncPatchId = function (tableName, request) {
-        var _this = this;
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
+        var answer = new factory_1.DaoResult(request);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetUpdateStatement(tableName, identityColumn, this.GetColumnProperties(tableName), request);
-        return new Promise(function (resolve, reject) {
-            _this.db.run(sql, function (error) {
-                if (error) {
-                    console.log(error.message);
-                    reject(error);
-                }
-                resolve("1");
-                console.log("result: 1");
-            });
-        });
+        return this.AsyncUpdate(answer, sql, request.params.id);
     };
     DaoSQLite.prototype.AsyncGet = function (tableName, request) {
         var _this = this;
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetSelectFromJsonBody(tableName, request);
+        var answer = new factory_1.DaoResult(request);
         return new Promise(function (resolve, reject) {
-            _this.db.all(sql, function (error, rows) {
+            _this.db.all(sql, function (error, result) {
                 if (error) {
                     reject(error);
                 }
-                resolve(rows);
+                answer.rows = result;
+                resolve(answer);
             });
         });
     };
     DaoSQLite.prototype.AsyncExistId = function (tableName, request) {
         var _this = this;
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
+        var answer = new factory_1.DaoResult(request);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetIdExistStatement(tableName, identityColumn, request.params.id);
         return new Promise(function (resolve, reject) {
             _this.db.all(sql, function (error, rows) {
                 if (error) {
                     reject(error);
                 }
-                resolve(rows);
+                answer.count = rows;
+                resolve(answer);
             });
         });
     };
     DaoSQLite.prototype.AsyncGetId = function (tableName, request) {
         var _this = this;
         var identityColumn = this.GetPrimarayKeyColumnName(tableName);
+        var answer = new factory_1.DaoResult(request);
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetSelectWithIdStatement(tableName, identityColumn, request.params.id);
         return new Promise(function (resolve, reject) {
             _this.db.all(sql, function (error, rows) {
                 if (error) {
                     reject(error);
                 }
-                resolve(rows);
+                answer.rows = rows;
+                resolve(answer);
             });
         });
     };
     DaoSQLite.prototype.AsyncCount = function (tableName, request) {
         var _this = this;
         var sql = ApiSQLStatements_1.ApiSQLStatements.GetCountSelectFromJsonBody(tableName, request);
+        var answer = new factory_1.DaoResult(request);
         return new Promise(function (resolve, reject) {
             _this.db.all(sql, function (error, rows) {
                 if (error) {
                     reject(error);
                 }
-                resolve(rows);
+                answer.rows = rows;
+                resolve(answer);
             });
         });
     };

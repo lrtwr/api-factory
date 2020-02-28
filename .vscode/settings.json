@@ -1,4 +1,31 @@
 {
     "sqltools.useNodeRuntime": true,
-    "breadcrumbs.enabled": false
+    "breadcrumbs.enabled": false,
+    "sqltools.connections": [
+        {
+            "connectionTimeout": 15,
+            "database": "angsql",
+            "dialect": "MariaDB",
+            "name": "LocalMariaDB angsql",
+            "password": "Ma#14Jovibo",
+            "port": 3307,
+            "server": "localhost",
+            "username": "root"
+        },
+        {
+            "database": "${workspaceFolder}\\node_modules/apimatic/apimatic.db",
+            "dialect": "SQLite",
+            "name": "DefaultSQLite ApiMagic Database"
+        },
+        {
+            "connectionTimeout": 15,
+            "database": "angsql",
+            "dialect": "MSSQL",
+            "name": "JAL angsql",
+            "password": "Jovibo",
+            "port": 1433,
+            "server": "localhost",
+            "username": "sa"
+        }
+    ]
 }

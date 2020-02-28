@@ -1,10 +1,21 @@
+import { Configuration } from './../base/factory';
 import { Express } from 'express';
+import { enumDatabaseType } from '../base/enums';
+
 export class ApiRouting {
   public app: Express;
   public routeList: any[] = [];
+  config: Configuration
   constructor(private server) {
     this.app = this.server.app;
-    this.Status();
+    this.config = this.server.config;
+    this.app.use(`/Status`, (req, res) => this.GetStatus(res));
+    if (this.config.databaseType != enumDatabaseType.MongoDb) {
+      this.app.use(`/Models`, (req, res) => res.json(this.server.dbHandler.dao.GetModels()));
+      this.AddRouteList("/Models", "*", "Database Model Definition.");
+      this.app.use(`/ColumnProperties`, (req, res) => res.json(this.server.dbHandler.dao.tableProperties.baseArray));
+      this.AddRouteList("/ColumnProperties", "*", "Database Column Definition.");
+    }
   }
 
   FinalizeRouting() {
@@ -21,7 +32,7 @@ export class ApiRouting {
     );
   }
 
-  GetStatus(request, response) {
+  GetStatus(response) {
     const conf2 = this.server.config;
     conf2.password = "********";
     conf2.user = "********";
@@ -31,10 +42,6 @@ export class ApiRouting {
     aJson.push({ "errors": this.server.lastErrors });
     aJson.push(this.routeList);
     response.json(aJson);
-  }
-
-  Status() {
-    this.app.use(`/Status`, (req, res) => this.GetStatus(req, res));
   }
 
   AllTablesApis() {
@@ -52,6 +59,7 @@ export class ApiRouting {
     this.ReadTableApis(tableName, route);
     this.Post(tableName, route);
     this.Put(tableName, route);
+    this.Patch(tableName, route);
     this.PutId(tableName, route);
     this.PatchId(tableName, route);
     this.DeleteId(tableName, route);
@@ -85,14 +93,6 @@ export class ApiRouting {
     );
   }
 
-  Put(tableName, route?) {
-    route = this.CleanupRoute(tableName, route);
-    this.AddRouteList(route, "Put", tableName);
-    this.app.put(`${route}`, (req, res) =>
-      this.server.dbHandler.Put(tableName, req, res)
-    );
-  }
-
   PutId(tableName, route?) {
     route = this.CleanupRoute(tableName, route);
     this.AddRouteList(route, "PutId", tableName);
@@ -106,6 +106,22 @@ export class ApiRouting {
     this.AddRouteList(route, "Post", tableName);
     this.app.post(`${route}`, (req, res) =>
       this.server.dbHandler.Post(tableName, req, res)
+    );
+  }
+
+  Patch(tableName, route?) {
+    route = this.CleanupRoute(tableName, route);
+    this.AddRouteList(route, "Patch", tableName);
+    this.app.patch(`${route}`, (req, res) =>
+      this.server.dbHandler.Patch(tableName, req, res)
+    );
+  }
+
+  Put(tableName, route?) {
+    route = this.CleanupRoute(tableName, route);
+    this.AddRouteList(route, "Put", tableName);
+    this.app.put(`${route}`, (req, res) =>
+      this.server.dbHandler.Put(tableName, req, res)
     );
   }
 

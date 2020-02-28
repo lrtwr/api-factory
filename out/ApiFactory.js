@@ -3,10 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var ApiServer_1 = require("./imp/ApiServer");
 var enums_1 = require("./base/enums");
 var factory_1 = require("./base/factory");
-var ApiRouting_1 = require("./imp/ApiRouting");
-exports.ApiRouting = ApiRouting_1.ApiRouting;
-var daoSupport_1 = require("./db/daoSupport");
-exports.ApiFactoryHandler = daoSupport_1.ApiFactoryHandler;
 exports.CreateMSSQLConfiguration = function (config) {
     var cfg = new factory_1.Configuration();
     cfg.databaseType = enums_1.enumDatabaseType.MSSQL;
@@ -32,7 +28,6 @@ exports.CreateMySQLConfiguration = function (config) {
 exports.CreateSQLiteConfiguration = function (config) {
     var cfg = new factory_1.Configuration();
     cfg.databaseType = enums_1.enumDatabaseType.SQLite;
-    cfg.connectionString = config.connectionString;
     cfg.database = config.database;
     cfg.listenPort =
         config.listenPort != null ? config.listenPort : 5000;
@@ -47,57 +42,77 @@ exports.CreateMongoConfiguration = function (config) {
         config.listenPort != null ? config.listenPort : 5000;
     return cfg;
 };
+exports.defaultConfig = exports.CreateSQLiteConfiguration({
+    listenPort: 6800,
+    database: "./node_modules/apimatic/apimatic.db"
+});
 exports.Connect = function (config, callback) {
+    if (config === void 0) { config = exports.defaultConfig; }
     var server = new ApiServer_1.ApiServer(config, callback);
     return server;
 };
-// api.CreateMySQLConfiguration({user: "root",
-// password: "Jovibo",
-// host: "localhost",
-// listenPort: 6000,
-// database: "angsql",
-// port: 3306});
-// api.CreateMySQLConfiguration({
-//   user: "root",
-//   password: "Ma#14Jovibo",
-//   host: "127.0.0.1",
-//   listenPort: 9000,
-//   database: "angsql",
-//   port: 3307
-// });
-exports.defaultSQLite = exports.CreateSQLiteConfiguration({
-    connectionString: "Data Source=apisqlite.db;",
-    listenPort: 6802,
-    database: "apisqlite.db"
-});
-exports.defaultMariaDB = exports.CreateMySQLConfiguration({
+exports.jalMariaDB = exports.CreateMySQLConfiguration({
     user: "root",
-    password: "Ma#14Jovibo",
+    password: "",
     host: "localhost",
-    listenPort: 6800,
+    listenPort: 6801,
     database: "angsql",
     port: 3307
 });
-exports.defaultMSSQL = exports.CreateMSSQLConfiguration({
-    listenPort: 6801,
+exports.jalMySQL = exports.CreateMySQLConfiguration({
+    user: "root",
+    password: "",
+    host: "localhost",
+    listenPort: 6802,
+    database: "angsql",
+    port: 3306
+});
+exports.jalMSSQL = exports.CreateMSSQLConfiguration({
+    listenPort: 6803,
     database: "AngSQL",
     user: "sa",
     password: "Jovibo",
     server: "JAL"
 });
-exports.defaultMongoExtern1 = exports.CreateMongoConfiguration({
-    connectionString: "mongodb+srv://JeroenLeertouwer:Mo%2328Jovibo@cluster0-1m6kn.azure.mongodb.net/test?authSource=admin&replicaSet=Cluster0-shard-0&w=majority&readPreference=primary&appname=MongoDB%20Compass%20Community&retryWrites=true&ssl=true",
-    database: "AngSQL",
-    listenPort: 6803
-});
-exports.defaultMongoExtern2 = exports.CreateMongoConfiguration({
-    connectionString: "mongodb+srv://JeroenLeertouwer:Mo%2328Jovibo@cluster0-w2idf.gcp.mongodb.net/test?authSource=admin&replicaSet=Cluster0-shard-0&readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=true",
+exports.jalMongo = exports.CreateMongoConfiguration({
+    connectionString: "mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false",
     database: "AngSQL",
     listenPort: 6804
 });
-exports.defaultMongoLocal = exports.CreateMongoConfiguration({
-    connectionString: "mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false",
-    database: "AngSQL",
-    listenPort: 6805
+exports.jalSQLite = exports.CreateSQLiteConfiguration({
+    listenPort: 6805,
+    database: "apisqlite.db"
 });
+exports.JALDEVELOPMariaDB = exports.CreateMySQLConfiguration({
+    host: "192.168.178.7",
+    user: "root",
+    database: "angsql",
+    password: "",
+    port: 3306,
+    listenPort: 6808
+});
+exports.JALDEVELOPMySQL = exports.CreateMySQLConfiguration({
+    host: "192.168.178.7",
+    user: "root",
+    database: "angsql",
+    password: "",
+    port: 3307,
+    listenPort: 6809
+});
+exports.JALDEVELOPMSSQL = exports.CreateMSSQLConfiguration({
+    listenPort: 688,
+    database: "angsql",
+    user: "sa",
+    password: "Jovibo",
+    server: "JALDEVELOP"
+});
+exports.JALDEVELOPMongo = exports.CreateMongoConfiguration({
+    connectionString: "mongodb://192.168.178.7:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false",
+    database: "AngSQL",
+    listenPort: 6809
+});
+//mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false
+exports.$$ = module.exports;
+exports.$ = module.exports;
+exports.ApiMatic = module.exports;
 //# sourceMappingURL=ApiFactory.js.map
