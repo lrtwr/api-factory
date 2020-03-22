@@ -4,11 +4,20 @@ export enum enumApiActions {
   Update,
   Delete,
   Count,
+  System,
   Error
+}
+
+export enum enumOperationMode{
+  Default = "Configuration Mode",
+  ReadOnly = "Readonly apis for ever table.",
+  ReadWrite = "Read and write apis for every table.",
+  Admin = "Admin mode. Read, write and create tables."
 }
 
 export enum enumDatabaseType {
   MongoDb = "Mongo database",
+  CosmosDb = "Cosmos DB",
   SQLite = "SQLite 3",
   SQLiteMemory = "SQLite 3 in Memory",
   MySQL = "MySQL server",

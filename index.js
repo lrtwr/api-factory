@@ -8,6 +8,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 
 module.exports = require('./out/ApiFactory');
-export const $$ = require('./out/ApiFactory');
-export const $ = require('./out/ApiFactory');
-export const ApiMatic = require('./out/ApiFactory');
+//module.exports = require('./src/ApiFactory')
+// export const $$ = require('./out/ApiFactory');
+// export const $ = require('./out/ApiFactory');
+// export const ApiMatic = require('./out/ApiFactory');

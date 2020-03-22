@@ -1,89 +1,78 @@
+import { ResponseDirector } from './../base/ResponseDirector';
+import { DynamicObject } from '../base/custom';
 import * as Express from "express";
-import * as BodyParser from "body-parser";
-import { ApiRouting } from "./ApiRouting";
-import { ApiFactoryHandler } from "../db/daoSupport";
-import { RunningStatus, Configuration } from "../base/factory";
-import { enumRunningStatus } from "../base/enums";
-export { ApiRouting } from "./ApiRouting";
-// const cors = require('cors');
-// const helmet = require('helmet');
-// const jwt = require('express-jwt');
-// const jwtAuthz = require('express-jwt-authz');
+import { ApiRoutingConfig, AbstractApiRouting, ApiRoutingReadOnly, ApiRoutingReadWrite, ApiRoutingAdmin } from "./ApiRouting";
+import { RunningStatus, Configuration } from "../base/custom";
+import { enumRunningStatus, enumOperationMode } from "../base/enums";
 
-var jwks = require('jwks-rsa');
-
-//npm install --save express-jwt jwks-rsa express-jwt-authz
-// const checkJwt = jwt({
-//     secret: jwks.expressJwtSecret({
-//         cache: true,
-//         rateLimit: true,
-//         jwksRequestsPerMinute: 5,
-//         jwksUri: 'https://dev-x90ce4d0.eu.auth0.com/.well-known/jwks.json'
-//   }),
-//   audience: 'https://localhost:6800',
-//   issuer: 'https://dev-x90ce4d0.eu.auth0.com/',
-//   algorithms: ['RS256']
-// });
 export class ApiServer {
   public app: any;
+
+  public responseDirector: ResponseDirector;
   public status: RunningStatus;
   public lastErrors: any[] = [];
-  public routing: ApiRouting;
-  public dbHandler: any;
-  //ads = [ {title: 'Hello, world (again)!'} ];
-    constructor(private config: Configuration, callback?: { (server): void }) {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const self = this;
-    this.app = Express();
-    // this.app.use(helmet());
-    this.app.use(BodyParser.json());
-    this.app.use(BodyParser.urlencoded({ extended: true }));
-    this.app.use(this.jsonErrorHandler);
-    // this.app.use(cors());
-    // this.app.use(checkJwt);
+  public routing: AbstractApiRouting;
+
+  constructor(public config: Configuration, private listenPort:number, public callback?: { (error: Error, routing: AbstractApiRouting): void }) {
     this.status = new RunningStatus(
       enumRunningStatus.Down,
       enumRunningStatus.Down,
       enumRunningStatus.Down
     );
-
-    if (!this.config){ 
-      console.log("Empty configuration is given!");
-    }
-
+    
+    this.app = Express();
+    var self = this;
+    if (!this.config) this.addError(null,"Empty configuration is given!" );
+    if (this.listenPort == null) this.listenPort = 6800;
     this.status.ApiServer = enumRunningStatus.ApiServerInitializing;
     const api = this.app
-      .listen(this.config.listenPort, () => {
-        console.log( this.config.databaseType.toString() + 
-          " is started at port:" +
+      .listen(this.listenPort, () => {
+        console.log(
+          self.config.databaseType +
+          "-server is started at url:" +
+          api.address().address +
+          " port: " +
           api.address().port
         );
+        console.log(process.env);
+        console.log(process.env.PORT);
         this.status.ApiServer = enumRunningStatus.ApiServerUp;
       })
-      .on("error", function (error) {
+      .on("error", function (error: any) {
         self.lastErrors.push(error);
         if (error.errno === "EADDRINUSE") {
           this.status.apiServer = enumRunningStatus.ApiServerError;
-          console.log(`Port ${config.listenPort} is busy`);
+          self.addError(error, "EADDRINUSE: " + this.config.listenPort + "is busy." );
         } else {
-          console.log(error);
+          self.addError( error, "Connection error." )
         }
       });
-    // this.app.get('/ads', (req, res) => {
-    //   res.send(this.ads);
-    // });
-  //   this.app.get('/authorized',checkJwt, function (req, res) {
-  //     res.send('Secured Resource');
-  // });
-    this.routing = new ApiRouting(this)
-    this.dbHandler = ApiFactoryHandler.GetDbApiHandler(this, callback);
+
+    //this.routing = new ApiRoutingConfig(this);
+    switch (this.config.operationMode) {
+      case enumOperationMode.ReadOnly:
+        this.routing = new ApiRoutingReadOnly(this);
+        break;
+      case enumOperationMode.ReadWrite:
+        this.routing = new ApiRoutingReadWrite(this);
+        break;
+      case enumOperationMode.Admin:
+        this.routing = new ApiRoutingAdmin(this);
+        break;
+      default:
+        this.routing = new ApiRoutingConfig(this);
+        break;
+    }
+    this.responseDirector = new ResponseDirector(this);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  jsonErrorHandler = async (error, request, response, next) => {
-    console.log(error);
-    this.lastErrors.push(error);
+  addError(errorObject: Error, message?: string) {
+    const newErrorObj: DynamicObject = {};
+      newErrorObj["error"] = errorObject;
+      newErrorObj.message = errorObject.message;
+   if (message) newErrorObj["message"] = message;
+    this.lastErrors.push({ newErrorObj });
+    console.log(errorObject);
   }
-
 }
 

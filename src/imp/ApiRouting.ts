@@ -1,26 +1,184 @@
-import { Configuration } from './../base/factory';
-import { Express } from 'express';
+import { ApiServer } from './ApiServer';
+import { Configuration } from '../base/custom';
 import { enumDatabaseType } from '../base/enums';
+import * as BodyParser from "body-parser";
 
-export class ApiRouting {
-  public app: Express;
+export abstract class AbstractApiRouting {
+  public app: any;
   public routeList: any[] = [];
   config: Configuration
-  constructor(private server) {
+  constructor(public server: ApiServer) {
     this.app = this.server.app;
     this.config = this.server.config;
-    this.app.use(`/Status`, (req, res) => this.GetStatus(res));
-    if (this.config.databaseType != enumDatabaseType.MongoDb) {
-      this.app.use(`/Models`, (req, res) => res.json(this.server.dbHandler.dao.GetModels()));
-      this.AddRouteList("/Models", "*", "Database Model Definition.");
-      this.app.use(`/ColumnProperties`, (req, res) => res.json(this.server.dbHandler.dao.tableProperties.baseArray));
-      this.AddRouteList("/ColumnProperties", "*", "Database Column Definition.");
-    }
+    this.app.use(BodyParser.json());
+    this.app.use(BodyParser.urlencoded({ extended: true }));
+    this.app.use(this.jsonErrorHandler);
+    this.app.use(`/Status`, (req:any, res:any) => this.getStatus(res));
   }
 
-  FinalizeRouting() {
-    this.app.use(`*`, (req, res) =>
-      this.server.dbHandler.Error({
+  jsonErrorHandler = async (error:any, request:any, response:any, next:any) => {
+    this.server.addError( error,  "Express error." );
+  }
+  abstract allTablesApis():any;
+  abstract finalizeRouting():any;
+
+  systemApis() {
+    this.createTable();
+    this.deleteTable();
+    this.createColumn();
+    this.createForeignKey();
+    this.app.use(`/system/TableNames`, (req:any, res:any) => res.json(this.server.responseDirector.apiDb.dao.tableNames()));
+    this.addRouteList("/system/TableNames", "*", "Database Tablenames.");
+    this.app.use(`/system/ModelInfo/:id`, (req:any, res:any) => res.json(this.server.responseDirector.apiDb.dao.models(req.params.id)));
+    this.addRouteList("/system/ModelInfo", "*/tableName", "Database Model Definition id: tablename");
+    this.app.use(`/system/ModelInfo`, (req:any, res:any) => res.json(this.server.responseDirector.apiDb.dao.models()));
+    this.addRouteList("/system/ModelInfo", "*", "Database Model Definition.");
+    this.addRouteList(`/system/ColumnInfo/:id`, "*/tableName", "Column properties id: tablename");
+    this.app.use(`/system/ColumnInfo/:id`, (req:any, res:any) => res.json(this.server.responseDirector.apiDb.dao.columnProperties(req.params.id)));
+    this.app.use(`/system/ColumnInfo`, (req:any, res:any) => res.json(this.server.responseDirector.apiDb.dao.tableProperties.baseArray));
+    this.addRouteList("/system/ColumnInfo", "*/tableName", "Database Column Definition.");
+    this.app.use(`/system/PrimaryKeys/:id`, (req:any, res:any) => res.json(this.server.responseDirector.apiDb.dao.primaryKeys(req.params.id)));
+    this.addRouteList("/system/PrimaryKeys/:id", "*/tableName", "Get PrimaryKey id: tablename");
+    this.app.use(`/system/PrimaryKeys`, (req:any, res:any) => res.json(this.server.responseDirector.apiDb.dao.primaryKeys()));
+    this.addRouteList("/system/PrimaryKeys", "*/tableName", "Get PrimaryKey id: tablename")
+  }
+
+  getStatus(response:any) {
+    const conf2 = this.server.config;
+    conf2.password = "********";
+    conf2.user = "********";
+    const aJson = [];
+    aJson.push(this.server.status);
+    aJson.push(conf2);
+    aJson.push({ "errors": this.server.lastErrors });
+    aJson.push(this.routeList);
+    response.json(aJson);
+  }
+  cleanupRoute(tableName:string, route:string) {
+    if (!route) route = "/" + tableName;
+    else {
+      if (route.substring(0, 1) != "/") route = "/" + route;
+    }
+    return route;
+  }
+
+  addRouteList(route: string, routeType: string, tableName: string) {
+    this.routeList.push({ route: route, routeType: routeType, tableName });
+  }
+
+  createTable(route?: any) {
+    route = this.cleanupRoute("system/CreateTable", route);
+    this.addRouteList(route, "system/CreateTable", "CreateTable");
+    this.app.use(`${route}/:tablename`, (req:any, res:any) =>
+      this.server.responseDirector.createTable(req, res)
+    );
+    this.app.use(`${route}`, (req:any, res:any) =>
+      this.server.responseDirector.createTable(req, res)
+    );
+  }
+
+  deleteTable(route?: any) {
+    route = this.cleanupRoute("system/DeleteTable", route);
+    this.addRouteList(route, "system/DeleteTable", "DeleteTable");
+    this.app.use(`${route}/:tablename`, (req:any, res:any) =>
+      this.server.responseDirector.deleteTable(req, res)
+    );
+    this.app.use(`${route}`, (req:any, res:any) =>
+      this.server.responseDirector.deleteTable(req, res)
+    );
+  }
+
+  createColumn(route?: any) {
+    route = this.cleanupRoute("system/CreateColumn", route);
+    this.addRouteList(route, "system/CreateColumn", "CreateColumn");
+    this.app.use(`${route}/:tablename/:columnname/:datatype`, (req:any, res:any) =>
+      this.server.responseDirector.createColumn(req, res)
+    );
+    this.app.use(`${route}`, (req:any, res:any) =>
+      this.server.responseDirector.createColumn(req, res)
+    );
+
+  }
+
+  createForeignKey(route?: any) {
+    route = this.cleanupRoute("system/CreateForeignKey", route);
+    this.addRouteList(route, "system/CreateForeignKey", "CreateForeignKey");
+    this.app.use(`${route}/:tablename/:targettable`, (req:any, res:any) =>
+      this.server.responseDirector.createForeignKey(req, res)
+    );
+    this.app.use(`${route}`, (req:any, res:any) =>
+      this.server.responseDirector.createForeignKey(req, res)
+    );
+
+  }
+
+  allReadOnlyApis() {
+    this.app.get("/:tablename/exist/:id", (req:any, res:any) => this.allExistId(req, res));
+    this.app.get("/:tablename/count", (req:any, res:any) => this.allCountId(req, res));
+    this.app.get("/:tablename/:id", (req:any, res:any) => this.allGetId(req, res));
+    this.app.get("/:tablename", (req:any, res:any) => this.allGet(req, res));
+  }
+
+  allReadWriteApis() {
+    this.app.put("/:tablename/:id", (req:any, res:any) => this.allPutId(req, res));
+    this.app.patch("/:tablename/:id", (req:any, res:any) => this.allPatchId(req, res));
+    this.app.delete("/:tablename/:id", (req:any, res:any) => this.allDeleteId(req, res));
+    this.app.post("/:tablename/", (req:any, res:any) => this.allPost(req, res));
+    this.app.put("/:tablename/", (req:any, res:any) => this.allPut(req, res));
+    this.app.patch("/:tablename/", (req:any, res:any) => this.allPatch(req, res));
+
+  }
+
+  allGet(request: any, response:any) {
+    this.server.responseDirector.get(request.params.tablename, request, response);
+  }
+
+  allGetId(request: any, response:any) {
+    this.server.responseDirector.getId(request.params.tablename, request, response);
+  }
+
+  allExistId(request: any, response:any) {
+    this.server.responseDirector.existId(request.params.tablename, request, response);
+  }
+
+  allCountId(request: any, response:any) {
+    this.server.responseDirector.getCount(request.params.tablename, request, response);
+  }
+
+  allPost(request: any, response:any) {
+    this.server.responseDirector.post(request.params.tablename, request, response);
+  }
+
+  allPut(request: any, response:any) {
+    this.server.responseDirector.put(request.params.tablename, request, response);
+  }
+
+  allPutId(request: any, response:any) {
+    this.server.responseDirector.putId(request.params.tablename, request, response);
+  }
+
+  allPatch(request: any, response:any) {
+    this.server.responseDirector.patch(request.params.tablename, request, response);
+  }
+
+  allPatchId(request: any, response:any) {
+    this.server.responseDirector.patchId(request.params.tablename, request, response);
+  }
+
+  allDeleteId(request: any, response:any) {
+    this.server.responseDirector.deleteId(request.params.tablename, request, response);
+  }
+}
+
+export class ApiRoutingConfig extends AbstractApiRouting {
+  constructor(public server: ApiServer) {
+    super(server);
+    this.systemApis();
+  }
+
+  finalizeRouting() {
+    this.app.use(`*`, (req:any, res:any) =>
+      this.server.responseDirector.error({
         body: req.body,
         expose: true,
         message: "Unhandled route. See /status for usable routing.",
@@ -32,140 +190,140 @@ export class ApiRouting {
     );
   }
 
-  GetStatus(response) {
-    const conf2 = this.server.config;
-    conf2.password = "********";
-    conf2.user = "********";
-    const aJson = [];
-    aJson.push(this.server.status);
-    aJson.push(conf2);
-    aJson.push({ "errors": this.server.lastErrors });
-    aJson.push(this.routeList);
-    response.json(aJson);
-  }
-
-  AllTablesApis() {
-    const tableNames: string[] = this.server.dbHandler.dao.GetTableNames();
-    tableNames.forEach((name) => {
-      this.TableApis(name);
-    })
-    const viewNames: string[] = this.server.dbHandler.dao.GetViewNames();
+  allTablesApis() {
+    const viewNames: string[] = this.server.responseDirector.apiDb.dao.viewNames();
     viewNames.forEach((name) => {
-      this.ReadViewApis(name);
+      this.readViewApis(name);
     })
+    this.allReadOnlyApis();
+    this.allReadWriteApis();
   }
 
-  TableApis(tableName, route?) {
-    this.ReadTableApis(tableName, route);
-    this.Post(tableName, route);
-    this.Put(tableName, route);
-    this.Patch(tableName, route);
-    this.PutId(tableName, route);
-    this.PatchId(tableName, route);
-    this.DeleteId(tableName, route);
+  readViewApis(viewName: string, route?:any) {
+    this.count(viewName, route);
+    this.get(viewName, route);
   }
 
-  ReadTableApis(tableName, route?) {
-    this.Count(tableName, route);
-    this.ExistId(tableName, route);
-    this.Get(tableName, route);
-    this.GetId(tableName, route);
-  }
-
-  ReadViewApis(viewName, route?) {
-    this.Count(viewName, route);
-    this.Get(viewName, route);
-  }
-
-  Get(tableName, route?) {
-    route = this.CleanupRoute(tableName, route);
-    this.AddRouteList(route, "Get", tableName);
-    this.app.get(`${route}`, (req, res) =>
-      this.server.dbHandler.Get(tableName, req, res)
+  get(tableName:string, route?:any) {
+    route = this.cleanupRoute(tableName, route);
+    this.addRouteList(route, "Get", tableName);
+    this.app.get(`${route}`, (req:any, res:any) =>
+      this.server.responseDirector.get(tableName, req, res)
     );
   }
 
-  GetId(tableName, route?) {
-    route = this.CleanupRoute(tableName, route);
-    this.AddRouteList(route, "GetId", tableName);
-    this.app.get(`${route}/:id`, (req, res) =>
-      this.server.dbHandler.GetId(tableName, req, res)
+  getId(tableName:string, route?:any) {
+    route = this.cleanupRoute(tableName, route);
+    this.addRouteList(`${route}/:id`, "GetId", tableName);
+    this.app.get(`${route}/:id`, (req:any, res:any) =>
+      this.server.responseDirector.getId(tableName, req, res)
     );
   }
 
-  PutId(tableName, route?) {
-    route = this.CleanupRoute(tableName, route);
-    this.AddRouteList(route, "PutId", tableName);
-    this.app.put(`${route}/:id`, (req, res) =>
-      this.server.dbHandler.PutId(tableName, req, res)
+  putId(tableName:string, route?:any) {
+    route = this.cleanupRoute(tableName, route);
+    this.addRouteList(`${route}/:id`, "PutId", tableName);
+    this.app.put(`${route}/:id`, (req:any, res:any) =>
+      this.server.responseDirector.putId(tableName, req, res)
     );
   }
 
-  Post(tableName, route?) {
-    route = this.CleanupRoute(tableName, route);
-    this.AddRouteList(route, "Post", tableName);
-    this.app.post(`${route}`, (req, res) =>
-      this.server.dbHandler.Post(tableName, req, res)
+  post(tableName:string, route?:any) {
+    route = this.cleanupRoute(tableName, route);
+    this.addRouteList(route, "Post", tableName);
+    this.app.post(`${route}`, (req:any, res:any) =>
+      this.server.responseDirector.post(tableName, req, res)
     );
   }
 
-  Patch(tableName, route?) {
-    route = this.CleanupRoute(tableName, route);
-    this.AddRouteList(route, "Patch", tableName);
-    this.app.patch(`${route}`, (req, res) =>
-      this.server.dbHandler.Patch(tableName, req, res)
+  patch(tableName:string, route?:any) {
+    route = this.cleanupRoute(tableName, route);
+    this.addRouteList(route, "Patch", tableName);
+    this.app.patch(`${route}`, (req:any, res:any) =>
+      this.server.responseDirector.patch(tableName, req, res)
     );
   }
 
-  Put(tableName, route?) {
-    route = this.CleanupRoute(tableName, route);
-    this.AddRouteList(route, "Put", tableName);
-    this.app.put(`${route}`, (req, res) =>
-      this.server.dbHandler.Put(tableName, req, res)
+  put(tableName:string, route?:any) {
+    route = this.cleanupRoute(tableName, route);
+    this.addRouteList(route, "Put", tableName);
+    this.app.put(`${route}`, (req:any, res:any) =>
+      this.server.responseDirector.put(tableName, req, res)
     );
   }
 
-  PatchId(tableName, route?) {
-    route = this.CleanupRoute(tableName, route);
-    this.AddRouteList(route, "PatchId", tableName);
-    this.app.patch(`${route}/:id`, (req, res) =>
-      this.server.dbHandler.PatchId(tableName, req, res)
+  patchId(tableName:string, route?:any) {
+    route = this.cleanupRoute(tableName, route);
+    this.addRouteList(`${route}/:id`, "PatchId", tableName);
+    this.app.patch(`${route}/:id`, (req:any, res:any) =>
+      this.server.responseDirector.patchId(tableName, req, res)
     );
   }
 
-  DeleteId(tableName, route?) {
-    route = this.CleanupRoute(tableName, route);
-    this.AddRouteList(route, "DeleteId", tableName);
-    this.app.delete(`${route}/:id`, (req, res) =>
-      this.server.dbHandler.DeleteId(tableName, req, res)
+  deleteId(tableName:string, route?:any) {
+    route = this.cleanupRoute(tableName, route);
+    this.addRouteList(`${route}/:id`, "DeleteId", tableName);
+    this.app.delete(`${route}/:id`, (req:any, res:any) =>
+      this.server.responseDirector.deleteId(tableName, req, res)
     );
   }
 
-  ExistId(tableName, route?) {
-    route = this.CleanupRoute(tableName, route) + '-exist';
-    this.AddRouteList(route, "ExistId", tableName);
-    this.app.get(`${route}/:id`, (req, res) =>
-      this.server.dbHandler.ExistId(tableName, req, res)
+  existId(tableName:string, route?:any) {
+    route = this.cleanupRoute(tableName, route);
+    this.addRouteList(`${route}/exist/:id`, "ExistId", tableName);
+    this.app.get(`${route}/exist/:id`, (req:any, res:any) =>
+      this.server.responseDirector.existId(tableName, req, res)
     );
   }
 
-  Count(tableName, route?) {
-    route = this.CleanupRoute(tableName, route) + "-count";
-    this.AddRouteList(route, "Count", tableName);
-    this.app.get(`${route}`, (req, res) =>
-      this.server.dbHandler.GetCount(tableName, req, res)
+  count(tableName:string, route?:any) {
+    route = this.cleanupRoute(tableName, route);
+    this.addRouteList(route, "Count", tableName);
+    this.app.get(`${route}/count`, (req:any, res:any) =>
+      this.server.responseDirector.getCount(tableName, req, res)
     );
   }
+}
 
-  AddRouteList(route: string, routeType: string, tableName: string) {
-    this.routeList.push({ route: route, routeType: routeType, tableName });
+export class ApiRoutingReadOnly extends AbstractApiRouting {
+  allTablesApis() {
+    throw new Error("Method not implemented.");
+  }
+  finalizeRouting() {
+    throw new Error("Method not implemented.");
+  }
+  constructor(server: ApiServer) {
+    super(server);
+    this.allReadOnlyApis();
   }
 
-  CleanupRoute(tableName, route) {
-    if (!route) route = "/" + tableName;
-    else {
-      if (route.substring(0, 1) != "/") route = "/" + route;
-    }
-    return route;
+}
+
+export class ApiRoutingReadWrite extends AbstractApiRouting {
+  allTablesApis() {
+    throw new Error("Method not implemented.");
+  }
+  finalizeRouting() {
+    throw new Error("Method not implemented.");
+  }
+  constructor(server: ApiServer) {
+    super(server);
+    this.allReadOnlyApis();
+    this.allReadWriteApis();
+  }
+}
+
+export class ApiRoutingAdmin extends AbstractApiRouting {
+  allTablesApis() {
+    throw new Error("Method not implemented.");
+  }
+  finalizeRouting() {
+    throw new Error("Method not implemented.");
+  }
+  constructor(server: ApiServer) {
+    super(server);
+    this.systemApis();
+    this.allReadOnlyApis();
+    this.allReadWriteApis();
   }
 }
