@@ -41,7 +41,7 @@ export class DaoSQLite   extends AbstractDao implements IDaoBasic {
       if (result) {
         self.callback(null,self.server.routing);
         this.status.DbConnect = enumRunningStatus.DbConnectConnected;
-        console.log("Connected to SQLite database: " + this.config.database);
+        console.log("Connected to SQLite database: `" + this.config.database+"` on process:" +process.pid+".");
       }
     });
   }

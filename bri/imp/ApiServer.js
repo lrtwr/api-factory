@@ -5,43 +5,79 @@ var Express = require("express");
 var ApiRouting_1 = require("./ApiRouting");
 var custom_1 = require("../base/custom");
 var enums_1 = require("../base/enums");
+var os = require("os");
+var cluster = require("cluster");
 var ApiServer = /** @class */ (function () {
-    function ApiServer(config, listenPort, callback) {
-        var _this = this;
+    function ApiServer(config, listenPort, callback, multiProcessing) {
+        if (multiProcessing === void 0) { multiProcessing = false; }
         this.config = config;
         this.listenPort = listenPort;
         this.callback = callback;
         this.lastErrors = [];
+        this.workers = [];
         this.status = new custom_1.RunningStatus(enums_1.enumRunningStatus.Down, enums_1.enumRunningStatus.Down, enums_1.enumRunningStatus.Down);
-        this.app = Express();
+        // start a process cluster
+        // one process for every cpu
+        if (os.cpus().length > 1 && multiProcessing) {
+            if (cluster.isMaster) {
+                console.log("Starting multiprocessing system.");
+                for (var i = 0; i < os.cpus().length; i++) {
+                    this.workers.push(cluster.fork());
+                    this.workers[i].on('message', function (message) {
+                        console.log(message);
+                    });
+                }
+                cluster.on('online', function (worker) {
+                    //console.log('Worker ' + worker.process.pid + ' is listening');
+                });
+                // if any of the worker process dies then start a new one by simply forking another one
+                cluster.on('exit', function (worker, code, signal) {
+                    console.log('Worker ' + worker.process.pid + ' died with code: ' + code + ', and signal: ' + signal);
+                    console.log('Starting a new worker');
+                    cluster.fork();
+                    this.workers.push(cluster.fork());
+                    // to receive messages from worker process
+                    this.workers[this.workers.length - 1].on('message', function (message) { return console.log(message); });
+                });
+            }
+            else
+                this.startExpress();
+        }
+        else
+            this.startExpress();
+    }
+    ApiServer.prototype.startExpress = function () {
+        var _this = this;
+        var _a;
         var self = this;
+        this.app = Express();
         if (!this.config)
             this.addError(null, "Empty configuration is given!");
-        if (this.listenPort == null)
-            this.listenPort = 6800;
         this.status.ApiServer = enums_1.enumRunningStatus.ApiServerInitializing;
-        var api = this.app
-            .listen(this.listenPort, function () {
+        var app = this.app
+            .listen((_a = this.listenPort, (_a !== null && _a !== void 0 ? _a : 6800)), function () {
+            //console.log(`Express server listening on port ${this.listenPort} with the single worker ${process.pid}`)
             console.log(self.config.databaseType +
                 "-server is started at url:" +
-                api.address().address +
+                app.address().address +
                 " port: " +
-                api.address().port);
-            console.log(process.env);
-            console.log(process.env.PORT);
+                app.address().port +
+                " process ID: " + process.pid);
+            //console.log(process.env);
             _this.status.ApiServer = enums_1.enumRunningStatus.ApiServerUp;
         })
-            .on("error", function (error) {
+            .on("error", function (error, appCtx) {
             self.lastErrors.push(error);
             if (error.errno === "EADDRINUSE") {
                 this.status.apiServer = enums_1.enumRunningStatus.ApiServerError;
                 self.addError(error, "EADDRINUSE: " + this.config.listenPort + "is busy.");
             }
             else {
-                self.addError(error, "Connection error.");
+                console.error('app error', error.stack);
+                console.error('on url', appCtx.req.url);
+                console.error('with headers', appCtx.req.headers);
             }
         });
-        //this.routing = new ApiRoutingConfig(this);
         switch (this.config.operationMode) {
             case enums_1.enumOperationMode.ReadOnly:
                 this.routing = new ApiRouting_1.ApiRoutingReadOnly(this);
@@ -57,7 +93,7 @@ var ApiServer = /** @class */ (function () {
                 break;
         }
         this.responseDirector = new ResponseDirector_1.ResponseDirector(this);
-    }
+    };
     ApiServer.prototype.addError = function (errorObject, message) {
         var newErrorObj = {};
         newErrorObj["error"] = errorObject;

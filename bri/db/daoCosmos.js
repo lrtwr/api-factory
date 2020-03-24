@@ -155,7 +155,7 @@ var DaoCosmos = /** @class */ (function (_super) {
                         return [4 /*yield*/, this.client.databases.createIfNotExists({ id: this.config.databaseId })
                                 .then(function (db) {
                                 self.db = db.database;
-                                console.log("Connected to CosmosDb: `" + self.config.databaseId + "`!");
+                                console.log("Connected to CosmosDb: `" + self.config.databaseId + "` on process:" + process.pid + ".");
                                 self.status.DbConnect = enums_1.enumRunningStatus.DbConnectConnected;
                             })
                                 .catch(function (error) {

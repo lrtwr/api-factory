@@ -124,6 +124,7 @@ var JsonResult = /** @class */ (function () {
         // jeroen exist nog toevoegen aan result.json object
         this.exists = function () { _this.count > 0 ? 1 : 0; };
         this.method = requestInfo.method;
+        this.processId = process.pid;
     }
     return JsonResult;
 }());

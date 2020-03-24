@@ -88,7 +88,7 @@ var DaoSQLite = /** @class */ (function (_super) {
                     if (result) {
                         self.callback(null, self.server.routing);
                         _this.status.DbConnect = enums_1.enumRunningStatus.DbConnectConnected;
-                        console.log("Connected to SQLite database: " + _this.config.database);
+                        console.log("Connected to SQLite database: `" + _this.config.database + "` on process:" + process.pid + ".");
                     }
                 });
                 return [2 /*return*/];

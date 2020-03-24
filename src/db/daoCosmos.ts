@@ -79,7 +79,7 @@ export class DaoCosmos extends AbstractDao implements IDaoBasic {
         await this.client.databases.createIfNotExists({ id: this.config.databaseId })
             .then((db: any) => {
                 self.db = db.database;
-                console.log("Connected to CosmosDb: `" + self.config.databaseId + "`!");
+                console.log("Connected to CosmosDb: `" + self.config.databaseId + "` on process:" +process.pid+".");
                 self.status.DbConnect = enumRunningStatus.DbConnectConnected;
             })
             .catch((error: Error) => {

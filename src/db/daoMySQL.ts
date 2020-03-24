@@ -44,7 +44,7 @@ export class DaoMySQL   extends AbstractDao implements IDaoBasic {
           if (result) {
             if (result == "1") {
               self.callback(null,self.server.routing);
-              console.log("Connected to MySQL: `" + this.config.database + "`!");
+              console.log("Connected to MySQL: `" + this.config.database + "` on process:" +process.pid+".");
               this.status.DbConnect = enumRunningStatus.DbConnectConnected;
             }
 

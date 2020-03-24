@@ -95,7 +95,7 @@ var DaoMSSQL = /** @class */ (function (_super) {
                                         if (result == "1") {
                                             self.callback(null, self.server.routing);
                                             _this.status.DbConnect = enums_1.enumRunningStatus.DbConnectConnected;
-                                            console.log("Connected to MSSQL: `" + _this.config.database + "`!");
+                                            console.log("Connected to MSSQL: `" + _this.config.database + "` on process:" + process.pid + ".");
                                         }
                                     }
                                 });

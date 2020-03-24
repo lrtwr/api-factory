@@ -5,9 +5,9 @@ var RequestInfo = /** @class */ (function () {
         if (unitId === void 0) { unitId = ""; }
         var _a, _b, _c, _d, _e, _f, _g;
         this.unitId = unitId;
-        this.MongoProjection = {};
-        this.MongoQuery = {};
-        this.MongoSort = {};
+        this.mongoProjection = {};
+        this.mongoQuery = {};
+        this.mongoSort = {};
         this.sqlselect = "";
         this.sqlwhere = "";
         this.sqlorder = "";
@@ -48,11 +48,11 @@ var RequestInfo = /** @class */ (function () {
             if (body["order"] != null)
                 this.sqlorder = body["order"];
             if (body["projection"] != null)
-                this.MongoProjection = body["projection"];
+                this.mongoProjection = body["projection"];
             if (body["query"] != null)
-                this.MongoQuery = body["query"];
+                this.mongoQuery = body["query"];
             if (body["sort"] != null)
-                this.MongoSort = body["sort"];
+                this.mongoSort = body["sort"];
             this.__pageLength = body["pagelength"];
             this.__pageNumber = body["pagenumber"];
         }

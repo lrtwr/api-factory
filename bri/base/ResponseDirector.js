@@ -59,7 +59,7 @@ var ResponseDirector = /** @class */ (function () {
         var promise = this.apiDb.asyncExistId(requestInfo);
         this.jsnRes.awaitAndRespond(requestInfo, response, promise, enums_1.enumApiActions.Read);
     };
-    ResponseDirector.prototype.getCount = function (tableName, request, response) {
+    ResponseDirector.prototype.count = function (tableName, request, response) {
         var requestInfo = new RequestInfo_1.RequestInfo(request, tableName);
         var promise = this.apiDb.asyncCount(requestInfo);
         this.jsnRes.awaitAndRespond(requestInfo, response, promise, enums_1.enumApiActions.Count);

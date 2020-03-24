@@ -50,6 +50,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var BodyParser = require("body-parser");
+var Morgan = require("morgan");
 var AbstractApiRouting = /** @class */ (function () {
     function AbstractApiRouting(server) {
         var _this = this;
@@ -66,7 +67,21 @@ var AbstractApiRouting = /** @class */ (function () {
         this.app.use(BodyParser.json());
         this.app.use(BodyParser.urlencoded({ extended: true }));
         this.app.use(this.jsonErrorHandler);
-        this.app.use("/Status", function (req, res) { return _this.getStatus(res); });
+        this.app.disable('x-powered-by');
+        this.app.use("/Status", function (req, res) { return _this.status(res); });
+        //this.app.use( Morgan(':method :url :status :res[content-length] - :response-time ms'))
+        //this.app.use(Morgan(':remote-addr - :remote-user ":method :url " :status :res[content-length] ":referrer" ":user-agent"'))
+        this.app.use("/Environment", function (req, res) { return _this.environment(res); });
+        //this.app.use(Morgan('tiny'));
+        this.app.use(Morgan(function (tokens, req, res) {
+            return [
+                tokens.method(req, res),
+                tokens.url(req, res),
+                tokens.status(req, res),
+                tokens.res(req, res, 'content-length'), '-',
+                tokens['response-time'](req, res), 'ms'
+            ].join(' ') + " ProcessId:" + process.pid;
+        }));
     }
     AbstractApiRouting.prototype.systemApis = function () {
         var _this = this;
@@ -89,13 +104,22 @@ var AbstractApiRouting = /** @class */ (function () {
         this.app.use("/system/PrimaryKeys", function (req, res) { return res.json(_this.server.responseDirector.apiDb.dao.primaryKeys()); });
         this.addRouteList("/system/PrimaryKeys", "*/tableName", "Get PrimaryKey id: tablename");
     };
-    AbstractApiRouting.prototype.getStatus = function (response) {
+    AbstractApiRouting.prototype.environment = function (response) {
+        var ret = {};
+        Object.keys(process.env).forEach(function (key) {
+            ret[key] = process.env[key];
+        });
+        ret["Process ID"] = process.pid;
+        response.json(ret);
+    };
+    AbstractApiRouting.prototype.status = function (response) {
         var conf2 = this.server.config;
         conf2.password = "********";
         conf2.user = "********";
         var aJson = [];
         aJson.push(this.server.status);
         aJson.push(conf2);
+        aJson.push("Process ID: " + process.pid);
         aJson.push({ "errors": this.server.lastErrors });
         aJson.push(this.routeList);
         response.json(aJson);
@@ -182,7 +206,7 @@ var AbstractApiRouting = /** @class */ (function () {
         this.server.responseDirector.existId(request.params.tablename, request, response);
     };
     AbstractApiRouting.prototype.allCountId = function (request, response) {
-        this.server.responseDirector.getCount(request.params.tablename, request, response);
+        this.server.responseDirector.count(request.params.tablename, request, response);
     };
     AbstractApiRouting.prototype.allPost = function (request, response) {
         this.server.responseDirector.post(request.params.tablename, request, response);
@@ -317,7 +341,7 @@ var ApiRoutingConfig = /** @class */ (function (_super) {
         route = this.cleanupRoute(tableName, route);
         this.addRouteList(route, "Count", tableName);
         this.app.get(route + "/count", function (req, res) {
-            return _this.server.responseDirector.getCount(tableName, req, res);
+            return _this.server.responseDirector.count(tableName, req, res);
         });
     };
     return ApiRoutingConfig;

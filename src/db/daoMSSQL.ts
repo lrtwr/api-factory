@@ -41,7 +41,7 @@ export class DaoMSSQL  extends AbstractDao implements IDaoBasic {
           if (result == "1") {
             self.callback(null,self.server.routing);
             this.status.DbConnect = enumRunningStatus.DbConnectConnected;
-            console.log("Connected to MSSQL: `" + this.config.database + "`!");
+            console.log("Connected to MSSQL: `" + this.config.database + "` on process:" +process.pid+".");
           }
         }
       })

@@ -98,7 +98,7 @@ export class DaoMongo extends AbstractDao implements IDaoBasic {
             if (result == "1") {
               self.callback(null,self.server.routing);
               this.status.DbConnect = enumRunningStatus.DbConnectConnected;
-              console.log("Connected to MongoDb: `" + this.config.database + "`!");
+              console.log("Connected to MongoDb: `" + this.config.database + "` on process:" +process.pid+".");
             }
           }
         });
@@ -130,8 +130,8 @@ export class DaoMongo extends AbstractDao implements IDaoBasic {
   async getAllItems(requestInfo: RequestInfo, callback: any) {
     const collection = this.db.collection(requestInfo.originalUnitId);
     collection
-      .find(requestInfo.MongoQuery, { projection: requestInfo.MongoProjection })
-      .sort(requestInfo.MongoSort)
+      .find(requestInfo.mongoQuery, { projection: requestInfo.mongoProjection })
+      .sort(requestInfo.mongoSort)
       .toArray((error: Error, result: any) => {
         if (error) callback(error);
         callback(null, result);
@@ -151,7 +151,7 @@ export class DaoMongo extends AbstractDao implements IDaoBasic {
 
   async countItems(requestInfo: RequestInfo, callback: any) {
     const collection = this.db.collection(requestInfo.originalUnitId);
-    collection.find(requestInfo.MongoQuery).count((error: Error, result: any) => {
+    collection.find(requestInfo.mongoQuery).count((error: Error, result: any) => {
       if (error) callback(error);
       if (result) callback(null, result);
     });

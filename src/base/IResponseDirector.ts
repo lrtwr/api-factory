@@ -10,7 +10,7 @@ export interface IResponseDirector {
     patchId(unitId: string, request:any, response: any): any;
     existId(unitId: string, request:any, response: any): any;
     deleteId(unitId: string, request:any, response: any): any;
-    getCount(unitId: string, request:any, response: any): any;
+    count(unitId: string, request:any, response: any): any;
     createTable( request:any, response: any): any;
     deleteTable( request:any, response: any): any;
     createColumn( request:any, response: any): any;

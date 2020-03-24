@@ -77,7 +77,7 @@ export class ResponseDirector implements IResponseDirector
     this.jsnRes.awaitAndRespond(requestInfo, response, promise, enumApiActions.Read);
   }
 
-  getCount(tableName: any, request: any, response: any) {
+  count(tableName: any, request: any, response: any) {
     const requestInfo = new RequestInfo(request, tableName);
      const promise = this.apiDb.asyncCount(requestInfo);
     this.jsnRes.awaitAndRespond(requestInfo, response, promise, enumApiActions.Count);

@@ -91,7 +91,7 @@ var DaoMySQL = /** @class */ (function (_super) {
                             if (result) {
                                 if (result == "1") {
                                     self.callback(null, self.server.routing);
-                                    console.log("Connected to MySQL: `" + _this.config.database + "`!");
+                                    console.log("Connected to MySQL: `" + _this.config.database + "` on process:" + process.pid + ".");
                                     _this.status.DbConnect = enums_1.enumRunningStatus.DbConnectConnected;
                                 }
                             }

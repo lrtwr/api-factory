@@ -89,9 +89,11 @@ export class JsonResult {
   public unUsedBodies: any[] = [];
   public unUsedIds: string[] = [];
   public method: string = "";
+  public processId: any;
 
   constructor(requestInfo: RequestInfo, public message: string="") {
     this.method = requestInfo.method;
+    this.processId = process.pid;
   }
   // jeroen exist nog toevoegen aan result.json object
 

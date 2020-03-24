@@ -155,7 +155,7 @@ var DaoMongo = /** @class */ (function (_super) {
                             if (result == "1") {
                                 self.callback(null, self.server.routing);
                                 _this.status.DbConnect = enums_1.enumRunningStatus.DbConnectConnected;
-                                console.log("Connected to MongoDb: `" + _this.config.database + "`!");
+                                console.log("Connected to MongoDb: `" + _this.config.database + "` on process:" + process.pid + ".");
                             }
                         }
                     });
@@ -193,8 +193,8 @@ var DaoMongo = /** @class */ (function (_super) {
             return __generator(this, function (_a) {
                 collection = this.db.collection(requestInfo.originalUnitId);
                 collection
-                    .find(requestInfo.MongoQuery, { projection: requestInfo.MongoProjection })
-                    .sort(requestInfo.MongoSort)
+                    .find(requestInfo.mongoQuery, { projection: requestInfo.mongoProjection })
+                    .sort(requestInfo.mongoSort)
                     .toArray(function (error, result) {
                     if (error)
                         callback(error);
@@ -223,7 +223,7 @@ var DaoMongo = /** @class */ (function (_super) {
             var collection;
             return __generator(this, function (_a) {
                 collection = this.db.collection(requestInfo.originalUnitId);
-                collection.find(requestInfo.MongoQuery).count(function (error, result) {
+                collection.find(requestInfo.mongoQuery).count(function (error, result) {
                     if (error)
                         callback(error);
                     if (result)

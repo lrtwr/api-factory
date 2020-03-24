@@ -1,7 +1,8 @@
+import { DynamicObject } from './../base/custom';
 import { ApiServer } from './ApiServer';
 import { Configuration } from '../base/custom';
-import { enumDatabaseType } from '../base/enums';
 import * as BodyParser from "body-parser";
+import * as Morgan from 'morgan'
 
 export abstract class AbstractApiRouting {
   public app: any;
@@ -13,8 +14,27 @@ export abstract class AbstractApiRouting {
     this.app.use(BodyParser.json());
     this.app.use(BodyParser.urlencoded({ extended: true }));
     this.app.use(this.jsonErrorHandler);
-    this.app.use(`/Status`, (req:any, res:any) => this.getStatus(res));
-  }
+    this.app.disable('x-powered-by');
+    this.app.use(`/Status`, (req:any, res:any) => this.status(res));
+    //this.app.use( Morgan(':method :url :status :res[content-length] - :response-time ms'))
+    //this.app.use(Morgan(':remote-addr - :remote-user ":method :url " :status :res[content-length] ":referrer" ":user-agent"'))
+    this.app.use(`/Environment`, (req:any, res:any) => this.environment(res));
+    //this.app.use(Morgan('tiny'));
+
+    this.app.use(Morgan(function (tokens, req, res) {
+      return [
+        tokens.method(req, res),
+        tokens.url(req, res),
+        tokens.status(req, res),
+        tokens.res(req, res, 'content-length'), '-',
+        tokens['response-time'](req, res), 'ms'
+      ].join(' ')+" ProcessId:" +process.pid
+    }))
+
+
+    }
+ 
+
 
   jsonErrorHandler = async (error:any, request:any, response:any, next:any) => {
     this.server.addError( error,  "Express error." );
@@ -43,13 +63,22 @@ export abstract class AbstractApiRouting {
     this.addRouteList("/system/PrimaryKeys", "*/tableName", "Get PrimaryKey id: tablename")
   }
 
-  getStatus(response:any) {
+  environment(response:any){
+    const ret: DynamicObject={};
+    Object.keys(process.env).forEach((key)=>{
+      ret[key] = process.env[key];
+    })
+    ret["Process ID"]= process.pid;
+    response.json(ret);
+  }
+  status(response:any) {
     const conf2 = this.server.config;
     conf2.password = "********";
     conf2.user = "********";
     const aJson = [];
     aJson.push(this.server.status);
     aJson.push(conf2);
+    aJson.push("Process ID: " + process.pid);
     aJson.push({ "errors": this.server.lastErrors });
     aJson.push(this.routeList);
     response.json(aJson);
@@ -142,7 +171,7 @@ export abstract class AbstractApiRouting {
   }
 
   allCountId(request: any, response:any) {
-    this.server.responseDirector.getCount(request.params.tablename, request, response);
+    this.server.responseDirector.count(request.params.tablename, request, response);
   }
 
   allPost(request: any, response:any) {
@@ -280,7 +309,7 @@ export class ApiRoutingConfig extends AbstractApiRouting {
     route = this.cleanupRoute(tableName, route);
     this.addRouteList(route, "Count", tableName);
     this.app.get(`${route}/count`, (req:any, res:any) =>
-      this.server.responseDirector.getCount(tableName, req, res)
+      this.server.responseDirector.count(tableName, req, res)
     );
   }
 }

@@ -15,6 +15,7 @@ export class RequestInfo {
   public id: any;
   public method: string;
   public originalUnitId: string;
+
   constructor(request: any, public unitId: string = "") {
     const body = request.body;
     this.id = request.params.id;
