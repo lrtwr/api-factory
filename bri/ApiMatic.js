@@ -15,12 +15,13 @@ exports.createMySQLConfiguration = function (config) {
     custom_1.CloneObjectInfo(config, cfg);
     return cfg;
 };
-exports.createSQLiteInMemoryConfiguration = function () {
+function createSQLiteInMemoryConfiguration() {
     var cfg = new custom_1.Configuration();
     cfg.databaseType = enums_1.enumDatabaseType.SQLiteMemory;
     cfg.database = ":memory:";
     return cfg;
-};
+}
+exports.createSQLiteInMemoryConfiguration = createSQLiteInMemoryConfiguration;
 exports.createSQLiteConfiguration = function (config) {
     var cfg = new custom_1.Configuration();
     cfg.databaseType = enums_1.enumDatabaseType.SQLite;
@@ -42,37 +43,42 @@ exports.createMongoConfiguration = function (config) {
 exports.defaultConfig = exports.createSQLiteConfiguration({
     database: "./node_modules/apimatic/apimatic.db"
 });
-exports.connect = function (config, listenPort, callback) {
+exports.connect = function (config, listenPort, callback, multiProcessing) {
     if (config === void 0) { config = exports.defaultConfig; }
+    if (multiProcessing === void 0) { multiProcessing = false; }
     config.operationMode = enums_1.enumOperationMode.Default;
     var server = new ApiServer_1.ApiServer(config, listenPort, callback);
     return server;
 };
-exports.connectReadonly = function (config, listenPort) {
+exports.connectReadonly = function (config, listenPort, multiProcessing) {
     if (config === void 0) { config = exports.defaultConfig; }
+    if (multiProcessing === void 0) { multiProcessing = false; }
     var callback = function () { };
     config.operationMode = enums_1.enumOperationMode.ReadOnly;
-    var server = new ApiServer_1.ApiServer(config, listenPort, callback);
+    var server = new ApiServer_1.ApiServer(config, listenPort, callback, multiProcessing);
     return server;
 };
-exports.connectReadWrite = function (config, listenPort) {
+exports.connectReadWrite = function (config, listenPort, multiProcessing) {
     if (config === void 0) { config = exports.defaultConfig; }
+    if (multiProcessing === void 0) { multiProcessing = false; }
     var callback = function () { };
     config.operationMode = enums_1.enumOperationMode.ReadWrite;
-    var server = new ApiServer_1.ApiServer(config, listenPort, callback);
+    var server = new ApiServer_1.ApiServer(config, listenPort, callback, multiProcessing);
     return server;
 };
-exports.connectAdmin = function (config, listenPort) {
+exports.connectAdmin = function (config, listenPort, multiProcessing) {
     if (config === void 0) { config = exports.defaultConfig; }
+    if (multiProcessing === void 0) { multiProcessing = false; }
     var callback = function () { };
     config.operationMode = enums_1.enumOperationMode.Admin;
-    var server = new ApiServer_1.ApiServer(config, listenPort, callback);
+    var server = new ApiServer_1.ApiServer(config, listenPort, callback, multiProcessing);
     return server;
 };
-exports.connectSQLiteMemory = function (listenPort) {
-    exports.connectAdmin(exports.createSQLiteInMemoryConfiguration(), listenPort);
+exports.connectSQLiteMemory = function (listenPort, multiProcessing) {
+    if (multiProcessing === void 0) { multiProcessing = false; }
+    exports.connectAdmin(createSQLiteInMemoryConfiguration(), listenPort, multiProcessing);
 };
-exports.SQLiteMemory = exports.createSQLiteInMemoryConfiguration();
+exports.SQLiteMemory = createSQLiteInMemoryConfiguration();
 exports.jalMariaDB = exports.createMySQLConfiguration({
     user: "root",
     password: "",
@@ -118,7 +124,7 @@ exports.JALDEVELOPMSSQL = exports.createMSSQLConfiguration({
     database: "angsql",
     user: "sa",
     password: "Jovibo",
-    server: "JALDEVELOP"
+    server: "192.168.178.7"
 });
 exports.JALDEVELOPMongo = exports.createMongoConfiguration({
     connectionString: "mongodb://192.168.178.7:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false",

@@ -155,8 +155,17 @@ var DaoCosmos = /** @class */ (function (_super) {
                         return [4 /*yield*/, this.client.databases.createIfNotExists({ id: this.config.databaseId })
                                 .then(function (db) {
                                 self.db = db.database;
-                                console.log("Connected to CosmosDb: `" + self.config.databaseId + "` on process:" + process.pid + ".");
-                                self.status.DbConnect = enums_1.enumRunningStatus.DbConnectConnected;
+                                _this.getDbInfo(function (error, result) {
+                                    if (error)
+                                        self.server.addError(error);
+                                    if (result) {
+                                        if (result == "1") {
+                                            self.callback(null, self.server.routing);
+                                            console.log("Connected to CosmosDb: `" + self.config.databaseId + "` on process:" + process.pid + ".");
+                                            self.status.DbConnect = enums_1.enumRunningStatus.DbConnectConnected;
+                                        }
+                                    }
+                                });
                             })
                                 .catch(function (error) {
                                 console.log(error);
@@ -164,20 +173,6 @@ var DaoCosmos = /** @class */ (function (_super) {
                             })];
                     case 1:
                         _a.sent();
-                        //const collectionDefinition = { id: this.config.collectionId };
-                        //const itemResponseumentDefinition = { id: "hello world itemResponse", content: "Hello World!" };
-                        //const collection = await this.db.containers.createIfNotExists({ id: "Branch" });
-                        this.getDbInfo(function (error, result) {
-                            if (error)
-                                self.server.addError(error);
-                            if (result) {
-                                if (result == "1") {
-                                    self.callback(null, self.server.routing);
-                                    _this.status.DbConnect = enums_1.enumRunningStatus.DbConnectConnected;
-                                    console.log("Connected to MSSQL: `" + _this.config.database + "`!");
-                                }
-                            }
-                        });
                         return [2 /*return*/];
                 }
             });

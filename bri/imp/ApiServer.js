@@ -34,10 +34,9 @@ var ApiServer = /** @class */ (function () {
                 cluster.on('exit', function (worker, code, signal) {
                     console.log('Worker ' + worker.process.pid + ' died with code: ' + code + ', and signal: ' + signal);
                     console.log('Starting a new worker');
-                    cluster.fork();
-                    this.workers.push(cluster.fork());
+                    var wrker = cluster.fork();
                     // to receive messages from worker process
-                    this.workers[this.workers.length - 1].on('message', function (message) { return console.log(message); });
+                    wrker.on('message', function (message) { return console.log(message); });
                 });
             }
             else

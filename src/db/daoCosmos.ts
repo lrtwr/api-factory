@@ -79,27 +79,21 @@ export class DaoCosmos extends AbstractDao implements IDaoBasic {
         await this.client.databases.createIfNotExists({ id: this.config.databaseId })
             .then((db: any) => {
                 self.db = db.database;
-                console.log("Connected to CosmosDb: `" + self.config.databaseId + "` on process:" +process.pid+".");
-                self.status.DbConnect = enumRunningStatus.DbConnectConnected;
+                this.getDbInfo((error: Error, result: any) => {
+                    if (error) self.server.addError(error);
+                    if (result) {
+                        if (result == "1") {
+                            self.callback(null, self.server.routing);
+                            console.log("Connected to CosmosDb: `" + self.config.databaseId + "` on process:" +process.pid+".");
+                            self.status.DbConnect = enumRunningStatus.DbConnectConnected;
+                        }
+                    }
+                })
             })
             .catch((error: Error) => {
                 console.log(error)
                 self.status.DbConnect = enumRunningStatus.DbConnectError;
             });
-
-        //const collectionDefinition = { id: this.config.collectionId };
-        //const itemResponseumentDefinition = { id: "hello world itemResponse", content: "Hello World!" };
-        //const collection = await this.db.containers.createIfNotExists({ id: "Branch" });
-        this.getDbInfo((error: Error, result: any) => {
-            if (error) self.server.addError(error);
-            if (result) {
-                if (result == "1") {
-                    self.callback(null, self.server.routing);
-                    this.status.DbConnect = enumRunningStatus.DbConnectConnected;
-                    console.log("Connected to MSSQL: `" + this.config.database + "`!");
-                }
-            }
-        })
     }
 
     async getDbInfo(callback?: any) {

@@ -30,7 +30,7 @@ export const createMySQLConfiguration = (config: {
   return cfg;
 }
 
-export const createSQLiteInMemoryConfiguration = () => {
+export function createSQLiteInMemoryConfiguration() {
   const cfg = new Configuration();
   cfg.databaseType=enumDatabaseType.SQLiteMemory;
   cfg.database=":memory:";
@@ -74,35 +74,35 @@ export const defaultConfig = createSQLiteConfiguration({
   database: "./node_modules/apimatic/apimatic.db"
 })
 
-export const connect = (config: Configuration = defaultConfig, listenPort:number, callback?: { (error: Error, routing:AbstractApiRouting): void }) => {
+export const connect = (config: Configuration = defaultConfig, listenPort:number, callback?: { (error: Error, routing:AbstractApiRouting): void }, multiProcessing:boolean=false) => {
   config.operationMode = enumOperationMode.Default;
   const server = new ApiServer(config, listenPort, callback);
   return server;
 }
 
-export const connectReadonly = (config: Configuration = defaultConfig, listenPort:number) => {
+export const connectReadonly = (config: Configuration = defaultConfig, listenPort:number, multiProcessing:boolean=false) => {
   const callback = ()=>{};
   config.operationMode = enumOperationMode.ReadOnly;
-  const server = new ApiServer(config, listenPort, callback);
+  const server = new ApiServer(config, listenPort, callback, multiProcessing);
   return server;
 }
 
-export const connectReadWrite = (config: Configuration = defaultConfig, listenPort:number) => {
+export const connectReadWrite = (config: Configuration = defaultConfig, listenPort:number, multiProcessing:boolean=false) => {
   const callback = ()=>{};
   config.operationMode = enumOperationMode.ReadWrite;
-  const server = new ApiServer(config, listenPort, callback);
+  const server = new ApiServer(config, listenPort, callback, multiProcessing);
   return server;
 }
 
-export const connectAdmin = (config: Configuration = defaultConfig, listenPort:number) => {
+export const connectAdmin = (config: Configuration = defaultConfig, listenPort:number, multiProcessing:boolean=false) => {
   const callback = ()=>{};
   config.operationMode = enumOperationMode.Admin;
-  const server = new ApiServer(config, listenPort, callback);
+  const server = new ApiServer(config, listenPort, callback, multiProcessing);
   return server;
 }
 
-export const connectSQLiteMemory = (listenPort:number) => {
-connectAdmin(createSQLiteInMemoryConfiguration(),listenPort);
+export const connectSQLiteMemory = (listenPort:number, multiProcessing:boolean=false) => {
+connectAdmin(createSQLiteInMemoryConfiguration(),listenPort, multiProcessing);
 }
 
 export const SQLiteMemory = createSQLiteInMemoryConfiguration();
@@ -159,7 +159,7 @@ export const JALDEVELOPMSSQL = createMSSQLConfiguration({
   database: "angsql",
   user: "sa",
   password: "Jovibo",
-  server: "JALDEVELOP"
+  server: "192.168.178.7"
 });
 
 export const JALDEVELOPMongo = createMongoConfiguration({
