@@ -22,7 +22,6 @@ export const createMySQLConfiguration = (config: {
   user: string;
   port?: number;
   password?: string;
-  listenPort?: number;
 }) => {
   const cfg = new Configuration();
   cfg.databaseType = enumDatabaseType.MySQL;
@@ -39,7 +38,6 @@ export function createSQLiteInMemoryConfiguration() {
 
 export const createSQLiteConfiguration = (config: {
   database: string;
-  listenPort?: number;
 }) => {
   const cfg = new Configuration();
   cfg.databaseType=enumDatabaseType.SQLite;
@@ -51,7 +49,6 @@ export const createCosmosConfiguration = (config: {
   host: string,
   authKey: string,
   databaseId: string,
-  listenPort?: number
 }) => {
   const cfg = new Configuration();
   cfg.databaseType = enumDatabaseType.CosmosDb;
@@ -62,7 +59,6 @@ export const createCosmosConfiguration = (config: {
 export const createMongoConfiguration = (config: {
   connectionString: string;
   database: string;
-  listenPort?: number;
 }) => {
   const cfg = new Configuration();
   cfg.databaseType = enumDatabaseType.MongoDb;
@@ -71,7 +67,8 @@ export const createMongoConfiguration = (config: {
 }
 
 export const defaultConfig = createSQLiteConfiguration({
-  database: "./node_modules/apimatic/apimatic.db"
+  database: "./apimatic.db"
+  //database: "./node_modules/apimatic/apimatic.db"
 })
 
 export const connect = (config: Configuration = defaultConfig, listenPort:number, callback?: { (error: Error, routing:AbstractApiRouting): void }, multiProcessing:boolean=false) => {
@@ -139,7 +136,7 @@ export const jalSQLite = createSQLiteConfiguration({
   database: "apisqlite.db"
 });
 
-export const JALDEVELOPMariaDB = createMySQLConfiguration({
+export const JALDEVELOPMySQL = createMySQLConfiguration({
   host: "192.168.178.7",
   user: "root",
   database: "angsql",
@@ -147,7 +144,7 @@ export const JALDEVELOPMariaDB = createMySQLConfiguration({
   port: 3306
 })
 
-export const JALDEVELOPMySQL = createMySQLConfiguration({
+export const JALDEVELOPMariaDB = createMySQLConfiguration({
   host: "192.168.178.7",
   user: "root",
   database: "angsql",

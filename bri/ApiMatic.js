@@ -41,7 +41,8 @@ exports.createMongoConfiguration = function (config) {
     return cfg;
 };
 exports.defaultConfig = exports.createSQLiteConfiguration({
-    database: "./node_modules/apimatic/apimatic.db"
+    database: "./apimatic.db"
+    //database: "./node_modules/apimatic/apimatic.db"
 });
 exports.connect = function (config, listenPort, callback, multiProcessing) {
     if (config === void 0) { config = exports.defaultConfig; }
@@ -106,14 +107,14 @@ exports.jalMongo = exports.createMongoConfiguration({
 exports.jalSQLite = exports.createSQLiteConfiguration({
     database: "apisqlite.db"
 });
-exports.JALDEVELOPMariaDB = exports.createMySQLConfiguration({
+exports.JALDEVELOPMySQL = exports.createMySQLConfiguration({
     host: "192.168.178.7",
     user: "root",
     database: "angsql",
     password: "",
     port: 3306
 });
-exports.JALDEVELOPMySQL = exports.createMySQLConfiguration({
+exports.JALDEVELOPMariaDB = exports.createMySQLConfiguration({
     host: "192.168.178.7",
     user: "root",
     database: "angsql",

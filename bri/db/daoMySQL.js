@@ -60,45 +60,69 @@ var DaoMySQL = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         _this.server = server;
         _this.callback = callback;
-        _this.executeSql = function (sql, callback) { return _this.db.query(sql, callback); };
+        _this.executeSqlOld = function (sql, callback) { return _this.db.query(sql, callback); };
+        _this.executeSql = function (sql, callback) {
+            var goOn = true;
+            _this.open(function (error) { if (error) {
+                callback(error);
+                goOn = false;
+            } });
+            if (!goOn)
+                return;
+            _this.db.query(sql, callback);
+            _this.close(function (error) { if (error)
+                callback(error); });
+        };
+        _this.close = function (callback) { return __awaiter(_this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                this.db.end();
+                return [2 /*return*/];
+            });
+        }); };
         _this.config = server.config;
         _this.status = server.status;
         _this.sqlStatements = new MySQLStatements_1.MySQLStatements();
         return _this;
     }
-    DaoMySQL.prototype.connect = function () {
+    DaoMySQL.prototype.open = function (callback) {
         return __awaiter(this, void 0, void 0, function () {
-            var self, db;
-            var _this = this;
             return __generator(this, function (_a) {
-                this.status.DbConnect = enums_1.enumRunningStatus.DbConnectInitializing;
-                self = this;
-                db = mysql.createConnection({
+                this.db = mysql.createConnection({
                     host: this.config.host,
                     user: this.config.user,
                     password: this.config.password,
                     database: this.config.database,
                     port: this.config.port
                 });
-                this.db = db;
-                db.connect(function (error) {
-                    if (error) {
-                        _this.server.lastErrors.push(error);
-                        throw error;
+                this.db.connect(function (error) {
+                    if (callback) {
+                        if (error)
+                            callback(error);
+                        else
+                            callback(null);
                     }
-                    else {
-                        _this.getDbInfo(function (error, result) {
-                            if (result) {
-                                if (result == "1") {
-                                    self.callback(null, self.server.routing);
-                                    console.log("Connected to MySQL: `" + _this.config.database + "` on process:" + process.pid + ".");
-                                    _this.status.DbConnect = enums_1.enumRunningStatus.DbConnectConnected;
-                                }
-                            }
-                            if (error)
-                                self.server.addError(error);
-                        });
+                });
+                return [2 /*return*/];
+            });
+        });
+    };
+    DaoMySQL.prototype.connect = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var self;
+            var _this = this;
+            return __generator(this, function (_a) {
+                this.status.DbConnect = enums_1.enumRunningStatus.DbConnectInitializing;
+                self = this;
+                this.getDbInfo(function (error, result) {
+                    if (result) {
+                        if (result == "1") {
+                            self.callback(null, self.server.routing);
+                            console.log("Connected to MySQL: `" + _this.config.database + "` on process:" + process.pid + ".");
+                            _this.status.DbConnect = enums_1.enumRunningStatus.DbConnectConnected;
+                        }
                     }
+                    if (error)
+                        self.server.addError(error);
                 });
                 return [2 /*return*/];
             });
@@ -252,7 +276,7 @@ var DaoMySQL = /** @class */ (function (_super) {
             return __generator(this, function (_a) {
                 columnProperties = this.columnProperties(requestInfo);
                 identityColumn = this.primaryKeyColumnName(requestInfo);
-                sql = this.sqlStatements.GetUpdateFromBodyStatement(requestInfo, id, identityColumn, columnProperties, body);
+                sql = this.sqlStatements.GetUpdateFromBodyStatement(requestInfo, id, identityColumn, columnProperties, body, "`", "`");
                 this.executeSql(sql, function (error) {
                     if (error)
                         callback(error);

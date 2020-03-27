@@ -4,13 +4,16 @@ import * as $$ from "./ApiMatic"
 
 
 let i=6800;
-//$$.connectSQLiteMemory(i++,true);
+//$$.connectSQLiteMemory(i++);
+$$.connect($$.defaultConfig,i++);
 
-$$.connectAdmin($$.JALDEVELOPMSSQL,i++,true);
-$$.connectAdmin($$.JALDEVELOPMySQL,i++,true);
-$$.connectAdmin($$.JALDEVELOPMariaDB,i++,true);
- $$.connectAdmin($$.JALDEVELOPMongo,i++,true);
-$$.connectAdmin($$.jalCosmos,i++,true);
+//$$.connectAdmin($$.JALDEVELOPMySQL,i++);
+//$$.connectAdmin($$.JALDEVELOPMariaDB,i++);
+
+$$.connectAdmin($$.JALDEVELOPMSSQL,i++);
+
+//  $$.connectAdmin($$.JALDEVELOPMongo,i++);
+// $$.connectAdmin($$.jalCosmos,i++);
 
 
 
@@ -18,7 +21,7 @@ $$.connectAdmin($$.jalCosmos,i++,true);
 
 
 // $$.ConnectAdmin();
-// $$.Connect($$.jalMySQL);
+//$$.connectAdmin($$.jalMySQL,i++);
 // $$.Connect($$.jalMSSQL);
 //$$.ConnectAdmin($$.jalMongo);
 // $$.Connect($$.jalCosmos);

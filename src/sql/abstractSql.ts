@@ -10,7 +10,7 @@ export interface ISQLBasic{
 export abstract class AbstractSQL {
 
     GetSelectWithIdStatement = (requestInfo:RequestInfo, identityColumn: string, id: string) => {
-        return `select * from ${requestInfo.tableName} where ${identityColumn} = ${id};`;
+        return `select * from ${requestInfo.tableName} where ${identityColumn} = '${id}';`;
     }
 
     GetDeleteWithIdStatement(requestInfo:RequestInfo, identityColumn: string, id: string) {
@@ -54,16 +54,19 @@ export abstract class AbstractSQL {
         id:any,
         identityColumn: string,
         tableColumnProperties: any,
-        updateInfo: { [x: string]: any; }
+        updateInfo: { [x: string]: any; },lDelimiter:string="'", rDelimiter:string="'"
     ) {
 
-        const sql = `Update ${requestInfo.tableName} Set `;
+        const sql = `Update ${lDelimiter}${requestInfo.tableName}${rDelimiter} Set `;
         const setArray = [];
+        let pkDataType:string="";
+        let pkDelimiter:string="";
         for (let i = 0; i < tableColumnProperties.length; i++) {
             const prop = tableColumnProperties[i];
+            if(prop.column_name == identityColumn)pkDataType=prop.data_type;
             if (updateInfo[prop.column_name] != null) {
                 if (prop.column_is_pk == 0) {
-                    setArray.push("'" + prop.column_name + "'=");
+                    setArray.push( lDelimiter+ prop.column_name + rDelimiter + "=");
                     switch (prop.data_type) {
                         case "TEXT":
                         case "NVARCHAR":
@@ -82,10 +85,18 @@ export abstract class AbstractSQL {
                 }
             }
         }
+        switch (pkDataType) {
+            case "TEXT":
+            case "UNIQUEIDENTIFIER":
+            case "NVARCHAR":
+            case "VARCHAR":
+                pkDelimiter="'";
+                break;
+        }
         return (
-            sql +
+            sql + 
             setArray.join(", ") +
-            ` Where ${identityColumn}=${id}`
+            ` Where ${identityColumn}=${pkDelimiter}${id}${pkDelimiter}`
         );
     }
 

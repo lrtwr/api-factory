@@ -10,14 +10,30 @@ import { AbstractApiRouting } from '../imp/ApiRouting';
 
 sqlite3.verbose();
 
-export class DaoSQLite   extends AbstractDao implements IDaoBasic {
-  executeSql = (sql:string, callback:any) => this.db.run(sql, callback);
+export class DaoSQLite extends AbstractDao implements IDaoBasic {
+  executeSql = (sql: string, callback: any) => this.db.run(sql, callback);
+
+  executeRun = (sql: string, callback: any) => {
+    let goOn = true;
+    this.open((error: Error) => { if (error) { callback(error); goOn = false } });
+    if (!goOn) return;
+    this.db.run(sql, callback);
+    this.close((error: Error) => { if (error) callback(error) });
+  }
+
+  executeAll = (sql: string, callback: any) => {
+    let goOn = true;
+    this.open((error: Error) => { if (error) { callback(error); goOn = false } });
+    if (!goOn) return;
+    this.db.all(sql, callback);
+    this.close((error: Error) => { if (error) callback(error) });
+  }
 
   public config: Configuration;
   public status: RunningStatus;
   constructor(
     public server: any,
-    public callback?: { (error: Error, routing:AbstractApiRouting): void }
+    public setupCallback?: { (error: Error, routing: AbstractApiRouting): void }
   ) {
     super();
     this.config = server.config;
@@ -25,33 +41,68 @@ export class DaoSQLite   extends AbstractDao implements IDaoBasic {
     this.sqlStatements = new SQLiteStatements();
   }
 
-  async connect() {
+  connect(callback?: any) {
+    const self = this;
     this.status.DbConnect = enumRunningStatus.DbConnectInitializing;
-    var self = this;
-    let openMode;
-    if(this.config.databaseType!= enumDatabaseType.SQLiteMemory) openMode = sqlite3.OPEN_CREATE;
-    this.db = new sqlite3.Database(this.config.database, openMode, (error:Error) => {
+    let _error: Error;
+    if (this.config.databaseType == enumDatabaseType.SQLiteMemory) {
+      this.db = new sqlite3.Database(this.config.database, null, function (error) {
+        if (error) { _error = error; }
+      })
+    }
+    else {
+      this.db = new sqlite3.Database(this.config.database, sqlite3.OPEN_READWRITE, function (error) {
+        if (error) { _error = error; }
+      })
+    }
+    this.close();
+    if (_error) {
+      if (callback) callback(_error);
+      return;
+    }
+
+    self.getDbInfo((error: Error) => {
       if (error) {
         self.status.DbConnect = enumRunningStatus.DbConnectError;
         self.server.addError(error);
+        if (callback) callback(error);
       }
-    });
-    this.getDbInfo((error:Error, result:any) => {
-      if (error) self.server.addError(error);
-      if (result) {
-        self.callback(null,self.server.routing);
-        this.status.DbConnect = enumRunningStatus.DbConnectConnected;
-        console.log("Connected to SQLite database: `" + this.config.database+"` on process:" +process.pid+".");
+      else{
+      self.setupCallback(null, self.server.routing);
+      self.status.DbConnect = enumRunningStatus.DbConnectConnected;
+      console.log("Connected to SQLite database: `" + self.config.database + "` on process:" + process.pid + ".");
+      if (callback) callback(null);
+      }
+    })
+  }
+
+  async open(callback?: any) {
+    if (this.config.databaseType == enumDatabaseType.SQLiteMemory) return;
+    this.db = new sqlite3.Database(this.config.database, null, (error: Error) => {
+      if (callback) {
+        if (error) callback(error);
+        else callback(null);
+      }
+    })
+  }
+
+  async close(callback?: any) {
+    if (this.config.databaseType == enumDatabaseType.SQLiteMemory) return;
+    if (!this.db) return;
+    this.db.close((error: Error) => {
+      if (callback) {
+        if (error) callback(error);
+        else callback(null);
       }
     });
   }
-
+  
   getDbInfo(callback?: any) {
     const sql = this.sqlStatements.GetTableColumnInfoStatement();
     const self = this;
-    this.db.all(sql, (error:Error, result:any) => {
+    this.executeAll(sql, (error: Error, result: any) => {
       const tmp: any[] = [];
-      result.forEach((row:any) => {
+      result.forEach((row: any) => {
         row.table_name = row.table_name.toLowerCase();
         if (row.table_name != "sqlite_sequence") tmp.push(row);
       })
@@ -61,37 +112,36 @@ export class DaoSQLite   extends AbstractDao implements IDaoBasic {
       ]);
       if (callback) {
         if (error) callback(error);
-        if (result) callback(null, "1");
-        else callback(null, "1");
+        callback(null);
       }
     });
   }
 
   createTable(requestInfo: RequestInfo, callback: any) {
     let tableProp = this.columnProperties(requestInfo);
-    const sql:string = this.sqlStatements.CreateTable(requestInfo);
-    this.executeSql(sql, (error:Error) => {
+    const sql: string = this.sqlStatements.CreateTable(requestInfo);
+    this.executeRun(sql, (error: Error) => {
       if (error) callback(error)
       else {
-        this.getDbInfo((error:Error) => {
+        this.getDbInfo((error: Error) => {
           if (error) callback(error)
           tableProp = this.columnProperties(requestInfo);
-          callback(null, tableProp!=null);
+          callback(null, tableProp != null);
         })
       }
     })
   }
 
   deleteTable(requestInfo: RequestInfo, callback: any) {
-      const sql = this.sqlStatements.DeleteTable(requestInfo);
-      this.executeSql(sql, (error:Error) => {
+    const sql = this.sqlStatements.DeleteTable(requestInfo);
+    this.executeRun(sql, (error: Error) => {
+      if (error) callback(error);
+      this.getDbInfo((error: Error) => {
         if (error) callback(error);
-        this.getDbInfo((error:Error) => {
-          if (error) callback(error);
-          const tableProp = this.columnProperties(requestInfo);
-          callback(null, tableProp!=null);
-        })
+        const tableProp = this.columnProperties(requestInfo);
+        callback(null, tableProp != null);
       })
+    })
   }
 
   createColumn(requestInfo: RequestInfo, callback: any) {
@@ -99,12 +149,12 @@ export class DaoSQLite   extends AbstractDao implements IDaoBasic {
     if (tableProp[requestInfo.tableName][requestInfo.columnName]) callback(null, "Column '" + requestInfo.columnName + " from table " + (requestInfo.tableName) + "' already exists.");
     else {
       const sql = this.sqlStatements.CreateColumn(requestInfo);
-      this.executeSql(sql, (error:Error, result:any) => {
+      this.executeRun(sql, (error: Error, result: any) => {
         if (error) callback(error);
         this.getDbInfo((error: Error) => {
           if (error) callback(error);
           tableProp = this.models();
-          callback(null, tableProp[requestInfo.tableName][requestInfo.columnName]!=null);
+          callback(null, tableProp[requestInfo.tableName][requestInfo.columnName] != null);
         })
       })
     }
@@ -112,14 +162,14 @@ export class DaoSQLite   extends AbstractDao implements IDaoBasic {
 
   createForeignKey(requestInfo: RequestInfo, callback: any) {
     requestInfo.columnName = requestInfo.targetTable + "Id";
-    const columnProp:any[] = this.columnProperties(requestInfo);
+    const columnProp: any[] = this.columnProperties(requestInfo);
     requestInfo.dataType = columnProp[0].data_type;
-    return this.createColumn(requestInfo, (error:Error, result:any) => {
-      callback(error,result)
+    return this.createColumn(requestInfo, (error: Error, result: any) => {
+      callback(error, result)
     });
   }
 
-  async updateItem(requestInfo: RequestInfo, id:any, body:any, callback:any) {
+   updateItem(requestInfo: RequestInfo, id: any, body: any, callback: any) {
     const columnProperties = this.columnProperties(requestInfo);
     const identityColumn = this.primaryKeyColumnName(requestInfo);
     let sql = this.sqlStatements.GetUpdateFromBodyStatement(
@@ -129,80 +179,79 @@ export class DaoSQLite   extends AbstractDao implements IDaoBasic {
       columnProperties,
       body
     );
-    this.executeSql(sql, function (error:Error, result?:any) {
+    this.executeRun(sql, function (error: Error, result?: any) {
       if (error) callback(error);
       if (result) callback(null, requestInfo.id);
       else callback(null, requestInfo.id);
     })
   }
 
-  async addItem(requestInfo: RequestInfo, body:{[k:string]:any}, callback:any) {
+  addItem(requestInfo: RequestInfo, body: { [k: string]: any }, callback: any) {
     const columnProperties = this.columnProperties(requestInfo);
     let sql = this.sqlStatements.GetInsertStatement(
       requestInfo,
       body,
       columnProperties,
-      "[","]"
+      "[", "]"
     );
-    this.executeSql(sql, function (error:Error, result:any) {
-      if(error)callback(error)
-      else callback(null,`${this.lastID}`);
+    this.executeRun(sql, function (error: Error, result: any) {
+      if (error) callback(error)
+      else callback(null, `${this.lastID}`);
     })
-
   }
 
-  async getAllItems( requestInfo: RequestInfo, callback:any) {
+  getAllItems(requestInfo: RequestInfo, callback: any) {
     const sql = this.sqlStatements.GetSelectFromRequestInfo(requestInfo);
-    this.db.all(sql, function (error:Error, result:any) {
+    this.executeAll(sql, function (error: Error, result: any) {
       if (error) callback(error);
       if (result) callback(null, result);
 
     });
   }
 
-  async countItems( requestInfo: RequestInfo, callback:any) {
-    const sql = this.sqlStatements.GetCountSelectRequestInfo( requestInfo);
-    this.db.all(sql, function (error:Error, result:any) {
+  countItems(requestInfo: RequestInfo, callback: any) {
+    const sql = this.sqlStatements.GetCountSelectRequestInfo(requestInfo);
+    this.executeAll(sql, function (error: Error, result: any) {
       if (error) callback(error);
       if (result) callback(null, result)
       else callback(null, 0);
     });
   }
 
-  async getItem(requestInfo: RequestInfo, itemId:any, callback:any) {
+  getItem(requestInfo: RequestInfo, itemId: any, callback: any) {
     const identityColumn = this.primaryKeyColumnName(requestInfo);
     const sql: string = this.sqlStatements.GetSelectWithIdStatement(
       requestInfo,
       identityColumn,
       itemId
     );
-    this.db.all(sql, function (error:Error, result:any) {
+    this.executeAll(sql, function (error: Error, result: any) {
       if (error) callback(error);
-      if (result) callback(result);
+      if (result) callback(null, result);
     });
   }
 
-  async itemExists(requestInfo: RequestInfo, itemId:any, callback:any) {
+  itemExists(requestInfo: RequestInfo, itemId: any, callback: any) {
     const identityColumn = this.primaryKeyColumnName(requestInfo);
     const sql: string = this.sqlStatements.GetIdExistStatement(
       requestInfo,
       identityColumn,
       itemId
     );
-    this.db.all(sql, function (error:Error, result:any) {
+    this.executeAll(sql, function (error: Error, result: any) {
       if (error) callback(error);
       if (result) callback(result);
     });
   }
 
-  async deleteItem(requestInfo:RequestInfo, itemId:any, callback:any) {
+  async deleteItem(requestInfo: RequestInfo, itemId: any, callback: any) {
     const identityColumn = this.primaryKeyColumnName(requestInfo);
     const sql: string = this.sqlStatements.GetDeleteWithIdStatement(
       requestInfo,
       identityColumn,
       itemId
     );
-    this.executeSql(sql, function (error:Error, result:any) {
+    this.executeRun(sql, function (error: Error, result: any) {
       if (error) callback(error);
       if (result) callback(null, itemId)
       else callback(null, itemId);

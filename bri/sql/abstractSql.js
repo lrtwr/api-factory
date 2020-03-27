@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var AbstractSQL = /** @class */ (function () {
     function AbstractSQL() {
         this.GetSelectWithIdStatement = function (requestInfo, identityColumn, id) {
-            return "select * from " + requestInfo.tableName + " where " + identityColumn + " = " + id + ";";
+            return "select * from " + requestInfo.tableName + " where " + identityColumn + " = '" + id + "';";
         };
     }
     AbstractSQL.prototype.GetDeleteWithIdStatement = function (requestInfo, identityColumn, id) {
@@ -39,14 +39,20 @@ var AbstractSQL = /** @class */ (function () {
             orderPart = " order by " + requestInfo.sqlorder;
         return (selectPart + wherePart + orderPart).trim() + ";";
     };
-    AbstractSQL.prototype.GetUpdateFromBodyStatement = function (requestInfo, id, identityColumn, tableColumnProperties, updateInfo) {
-        var sql = "Update " + requestInfo.tableName + " Set ";
+    AbstractSQL.prototype.GetUpdateFromBodyStatement = function (requestInfo, id, identityColumn, tableColumnProperties, updateInfo, lDelimiter, rDelimiter) {
+        if (lDelimiter === void 0) { lDelimiter = "'"; }
+        if (rDelimiter === void 0) { rDelimiter = "'"; }
+        var sql = "Update " + lDelimiter + requestInfo.tableName + rDelimiter + " Set ";
         var setArray = [];
+        var pkDataType = "";
+        var pkDelimiter = "";
         for (var i = 0; i < tableColumnProperties.length; i++) {
             var prop = tableColumnProperties[i];
+            if (prop.column_name == identityColumn)
+                pkDataType = prop.data_type;
             if (updateInfo[prop.column_name] != null) {
                 if (prop.column_is_pk == 0) {
-                    setArray.push("'" + prop.column_name + "'=");
+                    setArray.push(lDelimiter + prop.column_name + rDelimiter + "=");
                     switch (prop.data_type) {
                         case "TEXT":
                         case "NVARCHAR":
@@ -65,9 +71,17 @@ var AbstractSQL = /** @class */ (function () {
                 }
             }
         }
+        switch (pkDataType) {
+            case "TEXT":
+            case "UNIQUEIDENTIFIER":
+            case "NVARCHAR":
+            case "VARCHAR":
+                pkDelimiter = "'";
+                break;
+        }
         return (sql +
             setArray.join(", ") +
-            (" Where " + identityColumn + "=" + id));
+            (" Where " + identityColumn + "=" + pkDelimiter + id + pkDelimiter));
     };
     AbstractSQL.prototype.GetUpdateStatement = function (requestInfo, identityColumn, tableColumnProperties, request) {
         var sql = "Update " + requestInfo.tableName + " Set ";

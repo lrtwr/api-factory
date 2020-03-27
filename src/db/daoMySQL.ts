@@ -9,9 +9,19 @@ import { AbstractApiRouting } from '../imp/ApiRouting';
 
 
 export class DaoMySQL   extends AbstractDao implements IDaoBasic {
-  executeSql = (sql:string, callback:any) => this.db.query(sql, callback);
   public config: Configuration;
   public status: RunningStatus;
+  
+  executeSqlOld = (sql:string, callback:any) => this.db.query(sql, callback);
+  executeSql = (sql:string, callback:any) => {
+    let goOn = true;
+    this.open((error: Error) => { if (error) { callback(error); goOn = false } });
+    if (!goOn) return;
+    this.db.query(sql, callback);
+    this.close((error: Error) => { if (error) callback(error) });
+  };
+
+
   constructor(
     public server: any,
     public callback?: { (error: Error, routing:AbstractApiRouting): void }
@@ -22,37 +32,40 @@ export class DaoMySQL   extends AbstractDao implements IDaoBasic {
     this.sqlStatements = new MySQLStatements();
   }
 
-  async connect() {
-    this.status.DbConnect = enumRunningStatus.DbConnectInitializing;
-
-    const self = this;
-    const db = mysql.createConnection({
+  async open(callback?: any) {
+    this.db = mysql.createConnection({
       host: this.config.host,
       user: this.config.user,
       password: this.config.password,
       database: this.config.database,
       port: this.config.port
     });
-    this.db = db;
-    db.connect((error:Error) => {
-      if (error) {
-        this.server.lastErrors.push(error);
-        throw error;
+    this.db.connect((error:Error) => {
+      if (callback) {
+        if (error) callback(error);
+        else callback(null);
       }
-      else {
-        this.getDbInfo((error: Error, result:any) => {
-          if (result) {
-            if (result == "1") {
-              self.callback(null,self.server.routing);
-              console.log("Connected to MySQL: `" + this.config.database + "` on process:" +process.pid+".");
-              this.status.DbConnect = enumRunningStatus.DbConnectConnected;
-            }
+    })
+  }
 
-          }
-          if (error) self.server.addError(error);
-        })
+  close = async (callback?: any) => {
+    this.db.end();
+  }
+ 
+  
+  async connect() {
+    this.status.DbConnect = enumRunningStatus.DbConnectInitializing;
+    const self = this;
+       this.getDbInfo((error: Error, result:any) => {
+      if (result) {
+        if (result == "1") {
+          self.callback(null,self.server.routing);
+          console.log("Connected to MySQL: `" + this.config.database + "` on process:" +process.pid+".");
+          this.status.DbConnect = enumRunningStatus.DbConnectConnected;
+        }
       }
-    });
+      if (error) self.server.addError(error);
+    })
   };
 
   getDbInfo(callback?:any) {
@@ -180,7 +193,7 @@ export class DaoMySQL   extends AbstractDao implements IDaoBasic {
       id,
       identityColumn,
       columnProperties,
-      body
+      body,"`", "`"
     );
     this.executeSql(sql, function (error:Error) {
       if (error) callback(error);
