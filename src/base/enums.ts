@@ -21,6 +21,7 @@ export enum enumDatabaseType {
   SQLite = "SQLite 3",
   SQLiteMemory = "SQLite 3 in Memory",
   MySQL = "MySQL server",
+  MariaDB = "Maria DB server",
   MSSQL = "Microsoft SQL server"
 }
 

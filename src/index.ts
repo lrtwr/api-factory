@@ -1,18 +1,18 @@
-import { JALDEVELOPMariaDB } from './ApiMatic';
+import { jalDevelopMariaDB } from './ApiMatic';
 import { Configuration } from './base/custom';
 import * as $$ from "./ApiMatic"
 
 
 let i=6800;
 //$$.connectSQLiteMemory(i++);
-$$.connect($$.defaultConfig,i++);
+//$$.connect($$.defaultConfig,i++);
 
-//$$.connectAdmin($$.JALDEVELOPMySQL,i++);
-//$$.connectAdmin($$.JALDEVELOPMariaDB,i++);
+$$.connectAdmin($$.jalDevelopMySQL,i++);
+$$.connectAdmin($$.jalDevelopMariaDB,i++);
 
-$$.connectAdmin($$.JALDEVELOPMSSQL,i++);
+//$$.connectAdmin($$.jalDevelopMSSQL,i++);
 
-//  $$.connectAdmin($$.JALDEVELOPMongo,i++);
+//  $$.connectAdmin($$.jalDevelopMongo,i++);
 // $$.connectAdmin($$.jalCosmos,i++);
 
 

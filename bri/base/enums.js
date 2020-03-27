@@ -24,6 +24,7 @@ var enumDatabaseType;
     enumDatabaseType["SQLite"] = "SQLite 3";
     enumDatabaseType["SQLiteMemory"] = "SQLite 3 in Memory";
     enumDatabaseType["MySQL"] = "MySQL server";
+    enumDatabaseType["MariaDB"] = "Maria DB server";
     enumDatabaseType["MSSQL"] = "Microsoft SQL server";
 })(enumDatabaseType = exports.enumDatabaseType || (exports.enumDatabaseType = {}));
 var enumRunningStatus;

@@ -15,6 +15,12 @@ exports.createMySQLConfiguration = function (config) {
     custom_1.CloneObjectInfo(config, cfg);
     return cfg;
 };
+exports.createMariaDBConfiguration = function (config) {
+    var cfg = new custom_1.Configuration();
+    cfg.databaseType = enums_1.enumDatabaseType.MariaDB;
+    custom_1.CloneObjectInfo(config, cfg);
+    return cfg;
+};
 function createSQLiteInMemoryConfiguration() {
     var cfg = new custom_1.Configuration();
     cfg.databaseType = enums_1.enumDatabaseType.SQLiteMemory;
@@ -107,27 +113,40 @@ exports.jalMongo = exports.createMongoConfiguration({
 exports.jalSQLite = exports.createSQLiteConfiguration({
     database: "apisqlite.db"
 });
-exports.JALDEVELOPMySQL = exports.createMySQLConfiguration({
+exports.jalDevelopMySQL = exports.createMySQLConfiguration({
     host: "192.168.178.7",
     user: "root",
     database: "angsql",
     password: "",
     port: 3306
 });
-exports.JALDEVELOPMariaDB = exports.createMySQLConfiguration({
-    host: "192.168.178.7",
+exports.jalDevelopMariaDB = exports.createMariaDBConfiguration({
+    host: "JALDEVELOP",
     user: "root",
     database: "angsql",
     password: "",
     port: 3307
 });
-exports.JALDEVELOPMSSQL = exports.createMSSQLConfiguration({
+exports.jalDevelopMSSQL = exports.createMSSQLConfiguration({
     database: "angsql",
     user: "sa",
     password: "Jovibo",
-    server: "192.168.178.7"
+    server: "JALDEVELOP"
 });
-exports.JALDEVELOPMongo = exports.createMongoConfiguration({
+exports.jalDevelopMariaDBLocalHost = exports.createMariaDBConfiguration({
+    host: "localhost",
+    user: "root",
+    database: "angsql",
+    password: "",
+    port: 3307
+});
+exports.jalDevelopMSSQLLocalHost = exports.createMSSQLConfiguration({
+    database: "angsql",
+    user: "sa",
+    password: "Jovibo",
+    server: "localhost"
+});
+exports.jalDevelopMongo = exports.createMongoConfiguration({
     connectionString: "mongodb://192.168.178.7:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false",
     database: "AngSQL"
 });

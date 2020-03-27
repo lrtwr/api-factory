@@ -56,9 +56,12 @@ export class ApiDaoFactory {
       case enumDatabaseType.SQLiteMemory:  //jeroen SQLITE in Memory nog regelen
         return new ApiDbHandler(new DaoSQLite(server,server.callback), server);
         break;
-      case enumDatabaseType.MySQL:
-        return new ApiDbHandler(new DaoMySQL(server,server.callback), server);
-        break;
+        case enumDatabaseType.MySQL:
+          return new ApiDbHandler(new DaoMySQL(server,server.callback), server);
+          break;
+          case enumDatabaseType.MariaDB:
+            return new ApiDbHandler(new DaoMySQL(server,server.callback), server);
+            break;
       case enumDatabaseType.MSSQL:
         return new ApiDbHandler(new DaoMSSQL(server,server.callback), server);
         break;

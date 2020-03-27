@@ -60,6 +60,9 @@ var ApiDaoFactory = /** @class */ (function () {
             case enums_1.enumDatabaseType.MySQL:
                 return new apiDbHandler_1.ApiDbHandler(new daoMySQL_1.DaoMySQL(server, server.callback), server);
                 break;
+            case enums_1.enumDatabaseType.MariaDB:
+                return new apiDbHandler_1.ApiDbHandler(new daoMySQL_1.DaoMySQL(server, server.callback), server);
+                break;
             case enums_1.enumDatabaseType.MSSQL:
                 return new apiDbHandler_1.ApiDbHandler(new daoMSSQL_1.DaoMSSQL(server, server.callback), server);
                 break;

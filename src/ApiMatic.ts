@@ -29,6 +29,19 @@ export const createMySQLConfiguration = (config: {
   return cfg;
 }
 
+export const createMariaDBConfiguration = (config: {
+  host: string;
+  database: string;
+  user: string;
+  port?: number;
+  password?: string;
+}) => {
+  const cfg = new Configuration();
+  cfg.databaseType = enumDatabaseType.MariaDB;
+  CloneObjectInfo(config, cfg);
+  return cfg;
+}
+
 export function createSQLiteInMemoryConfiguration() {
   const cfg = new Configuration();
   cfg.databaseType=enumDatabaseType.SQLiteMemory;
@@ -136,7 +149,7 @@ export const jalSQLite = createSQLiteConfiguration({
   database: "apisqlite.db"
 });
 
-export const JALDEVELOPMySQL = createMySQLConfiguration({
+export const jalDevelopMySQL = createMySQLConfiguration({
   host: "192.168.178.7",
   user: "root",
   database: "angsql",
@@ -144,22 +157,36 @@ export const JALDEVELOPMySQL = createMySQLConfiguration({
   port: 3306
 })
 
-export const JALDEVELOPMariaDB = createMySQLConfiguration({
-  host: "192.168.178.7",
+export const jalDevelopMariaDB = createMariaDBConfiguration({
+  host: "JALDEVELOP",
   user: "root",
   database: "angsql",
   password: "",
   port: 3307
 })
 
-export const JALDEVELOPMSSQL = createMSSQLConfiguration({
+export const jalDevelopMSSQL = createMSSQLConfiguration({
   database: "angsql",
   user: "sa",
   password: "Jovibo",
-  server: "192.168.178.7"
+  server: "JALDEVELOP"
+});
+export const jalDevelopMariaDBLocalHost = createMariaDBConfiguration({
+  host: "localhost",
+  user: "root",
+  database: "angsql",
+  password: "",
+  port: 3307
+})
+
+export const jalDevelopMSSQLLocalHost = createMSSQLConfiguration({
+  database: "angsql",
+  user: "sa",
+  password: "Jovibo",
+  server: "localhost"
 });
 
-export const JALDEVELOPMongo = createMongoConfiguration({
+export const jalDevelopMongo = createMongoConfiguration({
   connectionString: "mongodb://192.168.178.7:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false",
   database: "AngSQL"
 });
