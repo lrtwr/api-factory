@@ -1,5 +1,5 @@
 
-import { RequestInfo } from './RequestInfo';
+import { RequestInfo } from './requestInfo';
 import { enumApiActions, enumDatabaseType, enumRunningStatus, enumOperationMode } from './enums';
 
 export interface DynamicObject {[k: string]: any;}
@@ -10,71 +10,27 @@ export const CloneObjectInfo = (fromObj: {[k: string]: any;}, toObj: {[k: string
   });
 }
 
-export class AObject {
-  constructor(oArray: any[], aProp?: string[]) {
-    if (oArray) {
-      if (oArray.length > 0) {
-        if (!aProp) aProp = Object.keys(oArray[0]);
-        aProp.forEach(prop => {
-          if (!this[prop]) this[prop] = {};
-          oArray.forEach(obj => {
-            if (!this[prop][obj[prop]]) this[prop][obj[prop]] = [];
-            this[prop][obj[prop]].push(obj);
-          });
-        });
-      }
-    }
+
+// Jeroen: Bruikbaar?
+export interface IDisposable {
+  dispose(): Promise<void>;
+}
+export async function asyncUsing<T extends IDisposable>(resource: T, func: (resource: T) => Promise<void>) {
+  try {
+      await func(resource);
+  } finally {
+      await resource.dispose();
   }
-  [k: string]: { [k: string]: any[] };
 }
 
-export class JsonDatabase {
-  public db: AObject;
-  constructor(public baseArray: any[], aProp?: string[]) {
-    this.db = new AObject(baseArray, aProp);
-  }
-
-  public GetPropArray = (
-    oArray: DynamicObject,
-    propertyName: string
-  ): string[] => {
-    const ret: string[] = [];
-    oArray.forEach((row:any) => {
-      if (ret.indexOf(row[propertyName]) == -1) {
-        ret.push(row[propertyName]);
-      }
-    });
-    return ret;
-  };
-
-  public FindFirstObjWithFilter = (
-    firstSel: string,
-    firstSelVal: string,
-    secondSel: string,
-    secondSelVal: string
-  ): any => {
-    const objs: any[] = this.db[firstSel][secondSel];
-    objs.forEach(column => {
-      if (column[secondSel] == secondSelVal) return column;
-    });
-  };
-
-  public Find(filter: DynamicObject) {
-    const ret: any[] = [];
-    this.baseArray.forEach(column => {
-      let doReturn = 1;
-      Object.keys(filter).forEach(prop => {
-        if (doReturn) {
-          if (column[prop] != filter[prop]) {
-            doReturn = 0;
-          }
-        }
-      });
-      if (doReturn) ret.push(column);
-    });
-    return ret;
+export function using<T extends IDisposable>(resource: T, func: (resource: T) => void) {
+  try {
+      func(resource);
+  } finally {
+      resource.dispose();
   }
 }
+///eind
 
 export class JsonResult {
   public rows: Array<any> = [];
@@ -97,7 +53,7 @@ export class JsonResult {
   }
   // jeroen exist nog toevoegen aan result.json object
 
-  public exists = () => { this.count > 0 ? 1 : 0; }
+  public get exists () { return this.count > 0 ? 1 : 0; }
 }
 
 export class ApiJsonResponse {
@@ -153,12 +109,15 @@ export class RunningStatus {
   get Status(): enumRunningStatus {
     return this.status;
   }
+  
   set Status(value: enumRunningStatus) {
     this.status = value;
   }
+
   get ApiServer(): enumRunningStatus {
     return this.apiServer;
   }
+
   set ApiServer(value: enumRunningStatus) {
     this.apiServer = value;
     if (this.apiServer == enumRunningStatus.ApiServerInitializing) {
@@ -214,8 +173,6 @@ export class Configuration {
   public get isSql() : boolean {
     return this.databaseType==enumDatabaseType.MSSQL || this.databaseType==enumDatabaseType.MySQL || this.databaseType==enumDatabaseType.SQLite || this.databaseType==enumDatabaseType.SQLiteMemory;
   }
-
-  
 }
 
 

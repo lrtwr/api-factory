@@ -19,14 +19,14 @@ var MSSQLStatements = /** @class */ (function (_super) {
     function MSSQLStatements() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
-    MSSQLStatements.prototype.CreateTable = function (requestInfo) {
+    MSSQLStatements.prototype.createTable = function (requestInfo) {
         var tableName = requestInfo.tableName;
         return "if not exists (select * from sysobjects where name='" + tableName + "' and xtype='U') CREATE TABLE [" + tableName + "] (Id UNIQUEIDENTIFIER PRIMARY KEY default NEWID())";
     };
-    MSSQLStatements.prototype.DeleteTable = function (requestInfo) {
+    MSSQLStatements.prototype.deleteTable = function (requestInfo) {
         return "if exists (select * from sysobjects where name='" + requestInfo.tableName + "' and xtype='U')\n    Drop TABLE [" + requestInfo.tableName + "]";
     };
-    MSSQLStatements.prototype.CreateColumn = function (requestInfo) {
+    MSSQLStatements.prototype.createColumn = function (requestInfo) {
         var tableName = requestInfo.tableName;
         var columnName = requestInfo.columnName;
         var columnType;
@@ -61,10 +61,10 @@ var MSSQLStatements = /** @class */ (function (_super) {
     // static GetSelectStatement(tableName) {
     //   return `select * from ${tableName};`;
     // }
-    MSSQLStatements.prototype.GetTableColumnInfoStatement = function () {
+    MSSQLStatements.prototype.tableColumnInfo = function () {
         return "SELECT n.name AS table_name, \n      n.table_type, \n      c.name AS column_name, \n      iif(q.column_name=c.name,1,0) as column_is_pk,\n      UPPER(s.name) AS data_type\n      FROM   (SELECT name, type_desc, object_id, 'table' AS table_type\n                   FROM    sys.tables\n                   WHERE  (name <> '__EFMigrationsHistory')\n                   UNION\n                   SELECT name, type_desc, object_id, 'view' AS table_type\n                   FROM   sys.views) AS n LEFT OUTER JOIN\n                   sys.columns AS c ON n.object_id = c.object_id INNER JOIN\n                   sys.systypes AS s ON c.system_type_id = s.xtype LEFT OUTER JOIN\n                   INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS q ON c.name = q.COLUMN_NAME AND n.name = q.TABLE_NAME\n      WHERE (s.name <> 'sysname')";
     };
-    MSSQLStatements.prototype.GetInsertStatement = function (requestInfo, body, columnProperties, ldelimiter, rdelimiter) {
+    MSSQLStatements.prototype.insert = function (requestInfo, body, columnProperties, ldelimiter, rdelimiter) {
         if (ldelimiter === void 0) { ldelimiter = "["; }
         if (rdelimiter === void 0) { rdelimiter = "]"; }
         var sql = "Insert into " + requestInfo.unitId + " ";

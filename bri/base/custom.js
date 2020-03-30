@@ -42,72 +42,38 @@ exports.CloneObjectInfo = function (fromObj, toObj) {
         toObj[key] = fromObj[key];
     });
 };
-var AObject = /** @class */ (function () {
-    function AObject(oArray, aProp) {
-        var _this = this;
-        if (oArray) {
-            if (oArray.length > 0) {
-                if (!aProp)
-                    aProp = Object.keys(oArray[0]);
-                aProp.forEach(function (prop) {
-                    if (!_this[prop])
-                        _this[prop] = {};
-                    oArray.forEach(function (obj) {
-                        if (!_this[prop][obj[prop]])
-                            _this[prop][obj[prop]] = [];
-                        _this[prop][obj[prop]].push(obj);
-                    });
-                });
+function asyncUsing(resource, func) {
+    return __awaiter(this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, , 2, 4]);
+                    return [4 /*yield*/, func(resource)];
+                case 1:
+                    _a.sent();
+                    return [3 /*break*/, 4];
+                case 2: return [4 /*yield*/, resource.dispose()];
+                case 3:
+                    _a.sent();
+                    return [7 /*endfinally*/];
+                case 4: return [2 /*return*/];
             }
-        }
-    }
-    return AObject;
-}());
-exports.AObject = AObject;
-var JsonDatabase = /** @class */ (function () {
-    function JsonDatabase(baseArray, aProp) {
-        var _this = this;
-        this.baseArray = baseArray;
-        this.GetPropArray = function (oArray, propertyName) {
-            var ret = [];
-            oArray.forEach(function (row) {
-                if (ret.indexOf(row[propertyName]) == -1) {
-                    ret.push(row[propertyName]);
-                }
-            });
-            return ret;
-        };
-        this.FindFirstObjWithFilter = function (firstSel, firstSelVal, secondSel, secondSelVal) {
-            var objs = _this.db[firstSel][secondSel];
-            objs.forEach(function (column) {
-                if (column[secondSel] == secondSelVal)
-                    return column;
-            });
-        };
-        this.db = new AObject(baseArray, aProp);
-    }
-    JsonDatabase.prototype.Find = function (filter) {
-        var ret = [];
-        this.baseArray.forEach(function (column) {
-            var doReturn = 1;
-            Object.keys(filter).forEach(function (prop) {
-                if (doReturn) {
-                    if (column[prop] != filter[prop]) {
-                        doReturn = 0;
-                    }
-                }
-            });
-            if (doReturn)
-                ret.push(column);
         });
-        return ret;
-    };
-    return JsonDatabase;
-}());
-exports.JsonDatabase = JsonDatabase;
+    });
+}
+exports.asyncUsing = asyncUsing;
+function using(resource, func) {
+    try {
+        func(resource);
+    }
+    finally {
+        resource.dispose();
+    }
+}
+exports.using = using;
+///eind
 var JsonResult = /** @class */ (function () {
     function JsonResult(requestInfo, message) {
-        var _this = this;
         if (message === void 0) { message = ""; }
         this.message = message;
         this.rows = [];
@@ -121,11 +87,15 @@ var JsonResult = /** @class */ (function () {
         this.unUsedBodies = [];
         this.unUsedIds = [];
         this.method = "";
-        // jeroen exist nog toevoegen aan result.json object
-        this.exists = function () { _this.count > 0 ? 1 : 0; };
         this.method = requestInfo.method;
         this.processId = process.pid;
     }
+    Object.defineProperty(JsonResult.prototype, "exists", {
+        // jeroen exist nog toevoegen aan result.json object
+        get: function () { return this.count > 0 ? 1 : 0; },
+        enumerable: true,
+        configurable: true
+    });
     return JsonResult;
 }());
 exports.JsonResult = JsonResult;

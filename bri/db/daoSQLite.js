@@ -50,10 +50,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var SQLiteStatements_1 = require("../sql/SQLiteStatements");
-var custom_1 = require("../base/custom");
 var enums_1 = require("../base/enums");
 var sqlite3 = require("sqlite3");
 var AbstractDao_1 = require("./AbstractDao");
+var jsonDB_1 = require("../base/jsonDB");
 sqlite3.verbose();
 var DaoSQLite = /** @class */ (function (_super) {
     __extends(DaoSQLite, _super);
@@ -61,7 +61,7 @@ var DaoSQLite = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         _this.server = server;
         _this.setupCallback = setupCallback;
-        _this.executeSql = function (sql, callback) { return _this.db.run(sql, callback); };
+        _this.executeSql = null;
         _this.executeRun = function (sql, callback) {
             var goOn = true;
             _this.open(function (error) { if (error) {
@@ -71,7 +71,7 @@ var DaoSQLite = /** @class */ (function (_super) {
             if (!goOn)
                 return;
             _this.db.run(sql, callback);
-            _this.close(function (error) { if (error)
+            _this.db.close(function (error) { if (error)
                 callback(error); });
         };
         _this.executeAll = function (sql, callback) {
@@ -83,7 +83,7 @@ var DaoSQLite = /** @class */ (function (_super) {
             if (!goOn)
                 return;
             _this.db.all(sql, callback);
-            _this.close(function (error) { if (error)
+            _this.db.close(function (error) { if (error)
                 callback(error); });
         };
         _this.config = server.config;
@@ -109,7 +109,6 @@ var DaoSQLite = /** @class */ (function (_super) {
                 }
             });
         }
-        this.close();
         if (_error) {
             if (callback)
                 callback(_error);
@@ -148,27 +147,8 @@ var DaoSQLite = /** @class */ (function (_super) {
             });
         });
     };
-    DaoSQLite.prototype.close = function (callback) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                if (this.config.databaseType == enums_1.enumDatabaseType.SQLiteMemory)
-                    return [2 /*return*/];
-                if (!this.db)
-                    return [2 /*return*/];
-                this.db.close(function (error) {
-                    if (callback) {
-                        if (error)
-                            callback(error);
-                        else
-                            callback(null);
-                    }
-                });
-                return [2 /*return*/];
-            });
-        });
-    };
     DaoSQLite.prototype.getDbInfo = function (callback) {
-        var sql = this.sqlStatements.GetTableColumnInfoStatement();
+        var sql = this.sqlStatements.tableColumnInfo(this.config.database);
         var self = this;
         this.executeAll(sql, function (error, result) {
             var tmp = [];
@@ -176,11 +156,9 @@ var DaoSQLite = /** @class */ (function (_super) {
                 row.table_name = row.table_name.toLowerCase();
                 if (row.table_name != "sqlite_sequence")
                     tmp.push(row);
+                1;
             });
-            self.tableProperties = new custom_1.JsonDatabase(tmp, [
-                "table_name",
-                "table_type"
-            ]);
+            self.dbInfo = new jsonDB_1.ColumnPropertyJDB(tmp);
             if (callback) {
                 if (error)
                     callback(error);
@@ -191,7 +169,7 @@ var DaoSQLite = /** @class */ (function (_super) {
     DaoSQLite.prototype.createTable = function (requestInfo, callback) {
         var _this = this;
         var tableProp = this.columnProperties(requestInfo);
-        var sql = this.sqlStatements.CreateTable(requestInfo);
+        var sql = this.sqlStatements.createTable(requestInfo);
         this.executeRun(sql, function (error) {
             if (error)
                 callback(error);
@@ -207,7 +185,7 @@ var DaoSQLite = /** @class */ (function (_super) {
     };
     DaoSQLite.prototype.deleteTable = function (requestInfo, callback) {
         var _this = this;
-        var sql = this.sqlStatements.DeleteTable(requestInfo);
+        var sql = this.sqlStatements.deleteTable(requestInfo);
         this.executeRun(sql, function (error) {
             if (error)
                 callback(error);
@@ -225,7 +203,7 @@ var DaoSQLite = /** @class */ (function (_super) {
         if (tableProp[requestInfo.tableName][requestInfo.columnName])
             callback(null, "Column '" + requestInfo.columnName + " from table " + (requestInfo.tableName) + "' already exists.");
         else {
-            var sql = this.sqlStatements.CreateColumn(requestInfo);
+            var sql = this.sqlStatements.createColumn(requestInfo);
             this.executeRun(sql, function (error, result) {
                 if (error)
                     callback(error);
@@ -249,7 +227,19 @@ var DaoSQLite = /** @class */ (function (_super) {
     DaoSQLite.prototype.updateItem = function (requestInfo, id, body, callback) {
         var columnProperties = this.columnProperties(requestInfo);
         var identityColumn = this.primaryKeyColumnName(requestInfo);
-        var sql = this.sqlStatements.GetUpdateFromBodyStatement(requestInfo, id, identityColumn, columnProperties, body);
+        var sql = this.sqlStatements.updateWithIdFromBody(requestInfo, id, identityColumn, columnProperties, body);
+        this.executeRun(sql, function (error, result) {
+            if (error)
+                callback(error);
+            if (result)
+                callback(null, requestInfo.id);
+            else
+                callback(null, requestInfo.id);
+        });
+    };
+    DaoSQLite.prototype.updateAll = function (requestInfo, body, callback) {
+        var columnProperties = this.columnProperties(requestInfo);
+        var sql = this.sqlStatements.updateFromBody(requestInfo, columnProperties, body);
         this.executeRun(sql, function (error, result) {
             if (error)
                 callback(error);
@@ -261,7 +251,7 @@ var DaoSQLite = /** @class */ (function (_super) {
     };
     DaoSQLite.prototype.addItem = function (requestInfo, body, callback) {
         var columnProperties = this.columnProperties(requestInfo);
-        var sql = this.sqlStatements.GetInsertStatement(requestInfo, body, columnProperties, "[", "]");
+        var sql = this.sqlStatements.insert(requestInfo, body, columnProperties, "[", "]");
         this.executeRun(sql, function (error, result) {
             if (error)
                 callback(error);
@@ -270,7 +260,7 @@ var DaoSQLite = /** @class */ (function (_super) {
         });
     };
     DaoSQLite.prototype.getAllItems = function (requestInfo, callback) {
-        var sql = this.sqlStatements.GetSelectFromRequestInfo(requestInfo);
+        var sql = this.sqlStatements.selectFromRequestInfo(requestInfo);
         this.executeAll(sql, function (error, result) {
             if (error)
                 callback(error);
@@ -279,7 +269,7 @@ var DaoSQLite = /** @class */ (function (_super) {
         });
     };
     DaoSQLite.prototype.countItems = function (requestInfo, callback) {
-        var sql = this.sqlStatements.GetCountSelectRequestInfo(requestInfo);
+        var sql = this.sqlStatements.countSelectRequestInfo(requestInfo);
         this.executeAll(sql, function (error, result) {
             if (error)
                 callback(error);
@@ -291,7 +281,7 @@ var DaoSQLite = /** @class */ (function (_super) {
     };
     DaoSQLite.prototype.getItem = function (requestInfo, itemId, callback) {
         var identityColumn = this.primaryKeyColumnName(requestInfo);
-        var sql = this.sqlStatements.GetSelectWithIdStatement(requestInfo, identityColumn, itemId);
+        var sql = this.sqlStatements.selectWithId(requestInfo, identityColumn, itemId);
         this.executeAll(sql, function (error, result) {
             if (error)
                 callback(error);
@@ -301,7 +291,7 @@ var DaoSQLite = /** @class */ (function (_super) {
     };
     DaoSQLite.prototype.itemExists = function (requestInfo, itemId, callback) {
         var identityColumn = this.primaryKeyColumnName(requestInfo);
-        var sql = this.sqlStatements.GetIdExistStatement(requestInfo, identityColumn, itemId);
+        var sql = this.sqlStatements.idExist(requestInfo, identityColumn, itemId);
         this.executeAll(sql, function (error, result) {
             if (error)
                 callback(error);
@@ -314,7 +304,7 @@ var DaoSQLite = /** @class */ (function (_super) {
             var identityColumn, sql;
             return __generator(this, function (_a) {
                 identityColumn = this.primaryKeyColumnName(requestInfo);
-                sql = this.sqlStatements.GetDeleteWithIdStatement(requestInfo, identityColumn, itemId);
+                sql = this.sqlStatements.deleteWithId(requestInfo, identityColumn, itemId);
                 this.executeRun(sql, function (error, result) {
                     if (error)
                         callback(error);

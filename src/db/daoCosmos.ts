@@ -1,5 +1,6 @@
+import { CloneObjectInfo } from './../base/custom';
 import { ApiServer } from './../imp/ApiServer';
-import { RequestInfo } from '../base/RequestInfo';
+import { RequestInfo } from '../base/requestInfo';
 import { DynamicObject, Configuration } from '../base/custom';
 
 const CosmosClient = require('@azure/cosmos').CosmosClient
@@ -9,7 +10,7 @@ import { enumRunningStatus } from '../base/enums';
 import { AbstractApiRouting } from '../imp/ApiRouting';
 
 export class DaoCosmos extends AbstractDao implements IDaoBasic {
-    public primaryKeyColumnName(requestInfo: RequestInfo) { return "id"; }
+    primaryKeyColumnName = (requestInfo: RequestInfo) => { return "id"; }
 
     createForeignKey(requestInfo: RequestInfo, callback: any) {
         throw new Error("Method not implemented.");
@@ -84,7 +85,7 @@ export class DaoCosmos extends AbstractDao implements IDaoBasic {
                     if (result) {
                         if (result == "1") {
                             self.callback(null, self.server.routing);
-                            console.log("Connected to CosmosDb: `" + self.config.databaseId + "` on process:" +process.pid+".");
+                            console.log("Connected to CosmosDb: `" + self.config.databaseId + "` on process:" + process.pid + ".");
                             self.status.DbConnect = enumRunningStatus.DbConnectConnected;
                         }
                     }
@@ -159,9 +160,7 @@ export class DaoCosmos extends AbstractDao implements IDaoBasic {
     async updateItem(requestInfo: RequestInfo, id: any, body: { [k: string]: any }, callback: any) {
         var collection = this.db.container(requestInfo.originalUnitId);
         const newBody: DynamicObject = {};
-        Object.keys(body).forEach(key => {
-            newBody[key] = body[key];
-        });
+        CloneObjectInfo(body, newBody)
         if (id) newBody["id"] = id;
         try {
             const result = await collection.items.upsert(newBody);
@@ -171,7 +170,22 @@ export class DaoCosmos extends AbstractDao implements IDaoBasic {
         }
     }
 
-    tableExists(requestInfo: RequestInfo): boolean {
+    async updateAll(requestInfo: RequestInfo, body: { [k: string]: any }, callback: any) {
+        var container = this.db.container(requestInfo.originalUnitId);
+        const { resources: items } = await container.items
+            .query(requestInfo.mongoQuery)
+            .fetchAll();
+        items.forEach((item: any) => {
+            CloneObjectInfo(body, item);
+            container.items.upsert(item);
+        }).then((result: any) => { callback(null, result) })
+            .catch((error: Error) => {
+                callback(error);
+            })
+    }
+
+
+    tableExists = (requestInfo: RequestInfo): boolean => {
         let ret: boolean = false;
         this.cosmosCollectionNames.forEach((col) => {
             if (col == requestInfo.originalUnitId) ret = true;
@@ -189,13 +203,9 @@ export class DaoCosmos extends AbstractDao implements IDaoBasic {
         }
     }
 
-    GetTableNames = (): string[] => {
-        return this.cosmosCollectionNames;
-    };
+    GetTableNames = (): string[] => { return this.cosmosCollectionNames; };
 
-    GetViewNames = (): string[] => {
-        return this.cosmosViewNames;
-    };
+    GetViewNames = (): string[] => { return this.cosmosViewNames; };
 
     GetPrimaryKeys = (): DynamicObject => {
         const ret: DynamicObject = {};

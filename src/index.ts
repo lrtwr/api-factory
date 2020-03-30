@@ -5,10 +5,10 @@ import * as $$ from "./ApiMatic"
 
 let i=6800;
 //$$.connectSQLiteMemory(i++);
-//$$.connect($$.defaultConfig,i++);
+$$.connect($$.defaultConfig,i++);
 
-$$.connectAdmin($$.jalDevelopMySQL,i++);
-$$.connectAdmin($$.jalDevelopMariaDB,i++);
+// $$.connectAdmin($$.jalDevelopMySQL,i++);
+// $$.connectAdmin($$.jalDevelopMariaDB,i++);
 
 //$$.connectAdmin($$.jalDevelopMSSQL,i++);
 

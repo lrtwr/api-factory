@@ -1,10 +1,10 @@
-import { ApiServer } from './../imp/ApiServer';
+import { ApiServer } from '../imp/ApiServer';
 import { enumApiActions } from "./enums";
 import { ApiJsonResponse } from "./custom";
 import { ApiDaoFactory } from "../db/ApiDaoFactory";
 import { ApiDbHandler } from "../db/apiDbHandler";
-import { RequestInfo } from "./RequestInfo";
-import { IResponseDirector } from './IResponseDirector';
+import { RequestInfo } from "./requestInfo";
+import { IResponseDirector } from './iResponseDirector';
 
 
 export class ResponseDirector implements IResponseDirector

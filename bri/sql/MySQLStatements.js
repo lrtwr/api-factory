@@ -19,16 +19,13 @@ var MySQLStatements = /** @class */ (function (_super) {
     function MySQLStatements() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
-    MySQLStatements.prototype.CreateTable = function (requestInfo) {
+    MySQLStatements.prototype.createTable = function (requestInfo) {
         return "CREATE TABLE if not exists " + requestInfo.tableName + " (Id int NOT NULL AUTO_INCREMENT, PRIMARY KEY (Id))";
     };
-    MySQLStatements.prototype.DeleteTable = function (requestInfo) {
+    MySQLStatements.prototype.deleteTable = function (requestInfo) {
         return "DROP TABLE if exists " + requestInfo.tableName;
     };
-    MySQLStatements.prototype.aaaCreateColumn = function (requestInfo) {
-        return "ALTER TABLE `" + requestInfo.tableName + "` Add Column `" + requestInfo.columnName + "` TEXT null";
-    };
-    MySQLStatements.prototype.CreateColumn = function (requestInfo) {
+    MySQLStatements.prototype.createColumn = function (requestInfo) {
         var tableName = requestInfo.tableName;
         var columnName = requestInfo.columnName;
         var dataType;
@@ -60,7 +57,7 @@ var MySQLStatements = /** @class */ (function (_super) {
         }
         return "ALTER TABLE `" + requestInfo.tableName + "` Add Column `" + columnName + "` " + dataType + " null";
     };
-    MySQLStatements.prototype.GetTableColumnInfoStatement = function (databaseName) {
+    MySQLStatements.prototype.tableColumnInfo = function (databaseName) {
         return "Select \n      col.table_schema as table_schema,\n      case \n     when vie.table_type = 'BASE TABLE' then 'table' \n     when vie.table_type = 'VIEW' then 'view' \n     else 'other' \n     end as table_type,\n      col.table_name as table_name, \n      col.column_name as column_name, \n      col.column_default as default_val, \n      col.is_nullable = \"YES\" as is_nullable, \n      upper(col.data_type) as data_type, \n      col.column_key='PRI' as column_is_pk  \n      FROM information_schema.columns col \n  join information_schema.tables vie on vie.table_schema = col.table_schema\n                                and vie.table_name = col.table_name\n  where col.table_schema not in ('sys','information_schema',\n                             'mysql', 'performance_schema')\n  and vie.table_schema = '" + databaseName + "' \n  order by col.table_name, col.ordinal_position;\n  ";
     };
     return MySQLStatements;

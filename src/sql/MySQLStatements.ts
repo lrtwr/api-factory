@@ -1,19 +1,16 @@
-import { RequestInfo } from '../base/RequestInfo';
+import { RequestInfo } from '../base/requestInfo';
 import { AbstractSQL } from './abstractSql';
 
 export class MySQLStatements extends AbstractSQL{
-    CreateTable(requestInfo: RequestInfo) {
+    createTable(requestInfo: RequestInfo) {
       return `CREATE TABLE if not exists ${requestInfo.tableName} (Id int NOT NULL AUTO_INCREMENT, PRIMARY KEY (Id))`;
     }
-    DeleteTable(requestInfo: RequestInfo) {
+
+    deleteTable(requestInfo: RequestInfo) {
       return `DROP TABLE if exists ${requestInfo.tableName}`;
     }
-    aaaCreateColumn(requestInfo: RequestInfo) {
-      return "ALTER TABLE `"+ requestInfo.tableName+"` Add Column `"+requestInfo.columnName+"` TEXT null"
 
-
-    }
-    CreateColumn(requestInfo: RequestInfo) {
+    createColumn(requestInfo: RequestInfo) {
       const tableName = requestInfo.tableName;
       const columnName = requestInfo.columnName;
       let dataType: string;
@@ -47,7 +44,7 @@ export class MySQLStatements extends AbstractSQL{
       return "ALTER TABLE `"+ requestInfo.tableName+"` Add Column `"+columnName+"` "+ dataType+" null";
     }
 
-    GetTableColumnInfoStatement(databaseName?: string) {
+    tableColumnInfo(databaseName?: string) {
       return `Select 
       col.table_schema as table_schema,
       case 

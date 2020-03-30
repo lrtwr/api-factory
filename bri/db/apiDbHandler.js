@@ -88,6 +88,22 @@ var ApiDbHandler = /** @class */ (function () {
             return Promise.resolve(answer);
         }
     };
+    ApiDbHandler.prototype.asyncPatchAll = function (requestInfo, body, answer) {
+        var self = this;
+        return new Promise(function (resolve, reject) {
+            self.dao.updateAll(requestInfo, body, function (error, result) {
+                if (error)
+                    reject(error);
+                if (result) {
+                    answer.updatedIds = result;
+                    answer.updated = answer.updatedIds.length;
+                    answer.count = answer.updatedIds.length;
+                    answer.message = "Records(" + answer.count + ") updated in table '" + requestInfo.tableName + "'.";
+                    resolve(answer);
+                }
+            });
+        });
+    };
     ApiDbHandler.prototype.asyncPatch = function (requestInfo) {
         if (!this.dao.tableExists(requestInfo))
             return Promise.resolve(new custom_1.JsonResult(requestInfo, "Table " + (requestInfo.tableName) + " does not exist."));
@@ -98,11 +114,17 @@ var ApiDbHandler = /** @class */ (function () {
         var self = this;
         var promises = [];
         if (postBody instanceof Array) {
+            //Jeroen: wat doen met postBodies zonder pk id => niet gebruiken?
             postBody.forEach(function (postItem) { return promises.push(self.asyncPatchOne(requestInfo, postItem[identityColumn], postItem, identityColumn, answer)); });
             return Promise.all(promises);
         }
-        else
-            return this.asyncPatchOne(requestInfo, postBody[identityColumn], postBody, identityColumn, answer);
+        else {
+            if (postBody[identityColumn]) {
+                return this.asyncPatchOne(requestInfo, postBody[identityColumn], postBody, identityColumn, answer);
+            }
+            else
+                return this.asyncPatchAll(requestInfo, postBody, answer);
+        }
     };
     ApiDbHandler.prototype.asyncPutOne = function (requestInfo, body, identityColumn, answer) {
         var self = this;
@@ -237,7 +259,7 @@ var ApiDbHandler = /** @class */ (function () {
                 if (error)
                     reject(error);
                 if (result) {
-                    answer.deletedIds.push(result.item.id);
+                    answer.deletedIds.push(result);
                     answer.deleted++;
                     answer.message = answer.deleted + " records deleted.";
                     resolve(answer);

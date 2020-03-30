@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var ResponseDirector_1 = require("./../base/ResponseDirector");
+var responseDirector_1 = require("../base/responseDirector");
 var Express = require("express");
 var ApiRouting_1 = require("./ApiRouting");
 var custom_1 = require("../base/custom");
@@ -91,7 +91,7 @@ var ApiServer = /** @class */ (function () {
                 this.routing = new ApiRouting_1.ApiRoutingConfig(this);
                 break;
         }
-        this.responseDirector = new ResponseDirector_1.ResponseDirector(this);
+        this.responseDirector = new responseDirector_1.ResponseDirector(this);
     };
     ApiServer.prototype.addError = function (errorObject, message) {
         var newErrorObj = {};

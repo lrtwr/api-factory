@@ -1,4 +1,4 @@
-import { ResponseDirector } from './../base/ResponseDirector';
+import { ResponseDirector } from '../base/responseDirector';
 import { DynamicObject } from '../base/custom';
 import * as Express from "express";
 import { ApiRoutingConfig, AbstractApiRouting, ApiRoutingReadOnly, ApiRoutingReadWrite, ApiRoutingAdmin } from "./ApiRouting";

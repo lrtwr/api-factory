@@ -49,6 +49,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var custom_1 = require("./../base/custom");
 var CosmosClient = require('@azure/cosmos').CosmosClient;
 var AbstractDao_1 = require("./AbstractDao");
 var enums_1 = require("../base/enums");
@@ -58,14 +59,19 @@ var DaoCosmos = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         _this.server = server;
         _this.callback = callback;
+        _this.primaryKeyColumnName = function (requestInfo) { return "id"; };
         _this.cosmosCollectionNames = [];
         _this.cosmosViewNames = [];
-        _this.GetTableNames = function () {
-            return _this.cosmosCollectionNames;
+        _this.tableExists = function (requestInfo) {
+            var ret = false;
+            _this.cosmosCollectionNames.forEach(function (col) {
+                if (col == requestInfo.originalUnitId)
+                    ret = true;
+            });
+            return ret;
         };
-        _this.GetViewNames = function () {
-            return _this.cosmosViewNames;
-        };
+        _this.GetTableNames = function () { return _this.cosmosCollectionNames; };
+        _this.GetViewNames = function () { return _this.cosmosViewNames; };
         _this.GetPrimaryKeys = function () {
             var ret = {};
             var tableNames = _this.GetTableNames();
@@ -78,7 +84,6 @@ var DaoCosmos = /** @class */ (function (_super) {
         _this.status = server.status;
         return _this;
     }
-    DaoCosmos.prototype.primaryKeyColumnName = function (requestInfo) { return "id"; };
     DaoCosmos.prototype.createForeignKey = function (requestInfo, callback) {
         throw new Error("Method not implemented.");
     };
@@ -305,9 +310,7 @@ var DaoCosmos = /** @class */ (function (_super) {
                     case 0:
                         collection = this.db.container(requestInfo.originalUnitId);
                         newBody = {};
-                        Object.keys(body).forEach(function (key) {
-                            newBody[key] = body[key];
-                        });
+                        custom_1.CloneObjectInfo(body, newBody);
                         if (id)
                             newBody["id"] = id;
                         _a.label = 1;
@@ -327,13 +330,29 @@ var DaoCosmos = /** @class */ (function (_super) {
             });
         });
     };
-    DaoCosmos.prototype.tableExists = function (requestInfo) {
-        var ret = false;
-        this.cosmosCollectionNames.forEach(function (col) {
-            if (col == requestInfo.originalUnitId)
-                ret = true;
+    DaoCosmos.prototype.updateAll = function (requestInfo, body, callback) {
+        return __awaiter(this, void 0, void 0, function () {
+            var container, items;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        container = this.db.container(requestInfo.originalUnitId);
+                        return [4 /*yield*/, container.items
+                                .query(requestInfo.mongoQuery)
+                                .fetchAll()];
+                    case 1:
+                        items = (_a.sent()).resources;
+                        items.forEach(function (item) {
+                            custom_1.CloneObjectInfo(body, item);
+                            container.items.upsert(item);
+                        }).then(function (result) { callback(null, result); })
+                            .catch(function (error) {
+                            callback(error);
+                        });
+                        return [2 /*return*/];
+                }
+            });
         });
-        return ret;
     };
     DaoCosmos.prototype.deleteItem = function (requestInfo, itemId, callback) {
         return __awaiter(this, void 0, void 0, function () {

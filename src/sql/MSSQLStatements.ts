@@ -1,19 +1,19 @@
-import { RequestInfo } from './../base/RequestInfo';
+import { RequestInfo } from '../base/requestInfo';
 import { AbstractSQL } from "./abstractSql";
 
 
 export class MSSQLStatements extends AbstractSQL{
-  CreateTable(requestInfo: RequestInfo) {
+  createTable(requestInfo: RequestInfo) {
     let tableName = requestInfo.tableName;
     return `if not exists (select * from sysobjects where name='${tableName}' and xtype='U') CREATE TABLE [${tableName}] (Id UNIQUEIDENTIFIER PRIMARY KEY default NEWID())`;
   }
 
-  DeleteTable(requestInfo: RequestInfo) {
+  deleteTable(requestInfo: RequestInfo) {
     return `if exists (select * from sysobjects where name='${requestInfo.tableName}' and xtype='U')
     Drop TABLE [${requestInfo.tableName}]`;
   }
 
-  CreateColumn(requestInfo: RequestInfo) {
+  createColumn(requestInfo: RequestInfo) {
     const tableName = requestInfo.tableName;
     const columnName = requestInfo.columnName;
     let columnType: string;
@@ -52,7 +52,7 @@ export class MSSQLStatements extends AbstractSQL{
     //   return `select * from ${tableName};`;
     // }
   
-    GetTableColumnInfoStatement() {
+    tableColumnInfo() {
       return `SELECT n.name AS table_name, 
       n.table_type, 
       c.name AS column_name, 
@@ -70,7 +70,7 @@ export class MSSQLStatements extends AbstractSQL{
       WHERE (s.name <> 'sysname')`;
     }
 
-    GetInsertStatement(requestInfo:RequestInfo, body:{[k:string]:any}, columnProperties:any, ldelimiter:string="[", rdelimiter:string="]" ) {
+    insert(requestInfo:RequestInfo, body:{[k:string]:any}, columnProperties:any, ldelimiter:string="[", rdelimiter:string="]" ) {
       const sql = `Insert into ${requestInfo.unitId} `;
       const asqlColumns = [];
       const asqlValues = [];

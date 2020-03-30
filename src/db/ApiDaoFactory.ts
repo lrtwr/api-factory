@@ -4,7 +4,7 @@ import { DaoMongo } from "./daoMongoDB";
 import { DaoSQLite  } from "./daoSQLite";
 import { DaoMySQL } from "./daoMySQL";
 import { DaoMSSQL } from "./daoMSSQL";
-import { ResponseDirector } from "../base/ResponseDirector";
+import { ResponseDirector } from "../base/responseDirector";
 import { enumDatabaseType } from "../base/enums";
 import { ApiDbHandler } from './apiDbHandler';
 import { AbstractApiRouting } from '../imp/ApiRouting';

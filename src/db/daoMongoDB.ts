@@ -1,4 +1,4 @@
-import { RequestInfo } from './../base/RequestInfo';
+import { RequestInfo } from '../base/requestInfo';
 import { DynamicObject, Configuration } from '../base/custom';
 import { MongoClient } from "mongodb";
 import { AbstractDao, IDaoBasic } from './AbstractDao';
@@ -8,7 +8,7 @@ import { ObjectID } from "mongodb";
 import { AbstractApiRouting } from '../imp/ApiRouting';
 
 export class DaoMongo extends AbstractDao implements IDaoBasic {
-  public primaryKeyColumnName(requestInfo: RequestInfo) { return "_id"; }
+  public primaryKeyColumnName = (requestInfo: RequestInfo) =>{ return "_id"; }
 
   createForeignKey(requestInfo: RequestInfo, callback: any) {
     throw new Error("Method not implemented.");
@@ -45,7 +45,7 @@ export class DaoMongo extends AbstractDao implements IDaoBasic {
     throw new Error("Method not implemented.");
   }
 
-  tableExists(requestInfo: RequestInfo): boolean {
+  tableExists = (requestInfo: RequestInfo): boolean =>{
     let ret: boolean = false;
     this.mongoCollectionNames.forEach((col) => {
       if (col == requestInfo.originalUnitId) ret = true;
@@ -169,6 +169,18 @@ export class DaoMongo extends AbstractDao implements IDaoBasic {
     const collection = this.db.collection(requestInfo.originalUnitId);
     collection.updateOne(
       { _id: new ObjectID(id) },
+      { $set: body },
+      (error:Error, result:any) => {
+        if (error) callback(error);
+        callback(null, [result.modifiedCount]);
+      }
+    );
+  }
+
+  async updateAll(requestInfo: RequestInfo, body: { [k: string]: any; }, callback: any) {
+    const collection = this.db.collection(requestInfo.originalUnitId);
+    collection.updateMany(
+      requestInfo.mongoQuery,
       { $set: body },
       (error:Error, result:any) => {
         if (error) callback(error);

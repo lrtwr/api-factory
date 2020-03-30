@@ -59,6 +59,15 @@ var DaoMongo = /** @class */ (function (_super) {
         var _this = _super.call(this) || this;
         _this.server = server;
         _this.callback = callback;
+        _this.primaryKeyColumnName = function (requestInfo) { return "_id"; };
+        _this.tableExists = function (requestInfo) {
+            var ret = false;
+            _this.mongoCollectionNames.forEach(function (col) {
+                if (col == requestInfo.originalUnitId)
+                    ret = true;
+            });
+            return ret;
+        };
         _this.mongoCollectionNames = [];
         _this.mongoViewNames = [];
         _this.getTableNames = function () {
@@ -79,7 +88,6 @@ var DaoMongo = /** @class */ (function (_super) {
         _this.status = server.status;
         return _this;
     }
-    DaoMongo.prototype.primaryKeyColumnName = function (requestInfo) { return "_id"; };
     DaoMongo.prototype.createForeignKey = function (requestInfo, callback) {
         throw new Error("Method not implemented.");
     };
@@ -114,14 +122,6 @@ var DaoMongo = /** @class */ (function (_super) {
     };
     DaoMongo.prototype.executeSql = function (sql, callback) {
         throw new Error("Method not implemented.");
-    };
-    DaoMongo.prototype.tableExists = function (requestInfo) {
-        var ret = false;
-        this.mongoCollectionNames.forEach(function (col) {
-            if (col == requestInfo.originalUnitId)
-                ret = true;
-        });
-        return ret;
     };
     DaoMongo.prototype.itemExists = function (unitId, itemId, callback) {
         var collection = this.db.collection(unitId);
@@ -259,6 +259,20 @@ var DaoMongo = /** @class */ (function (_super) {
             return __generator(this, function (_a) {
                 collection = this.db.collection(requestInfo.originalUnitId);
                 collection.updateOne({ _id: new mongodb_2.ObjectID(id) }, { $set: body }, function (error, result) {
+                    if (error)
+                        callback(error);
+                    callback(null, [result.modifiedCount]);
+                });
+                return [2 /*return*/];
+            });
+        });
+    };
+    DaoMongo.prototype.updateAll = function (requestInfo, body, callback) {
+        return __awaiter(this, void 0, void 0, function () {
+            var collection;
+            return __generator(this, function (_a) {
+                collection = this.db.collection(requestInfo.originalUnitId);
+                collection.updateMany(requestInfo.mongoQuery, { $set: body }, function (error, result) {
                     if (error)
                         callback(error);
                     callback(null, [result.modifiedCount]);

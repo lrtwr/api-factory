@@ -1,8 +1,8 @@
 import { ApiServer } from './../imp/ApiServer';
-import { Configuration } from './../base/custom';
+import { Configuration, DynamicObject } from './../base/custom';
 import { RunningStatus, JsonResult } from "../base/custom";
 import { AbstractDao, IDaoBasic } from "./AbstractDao";
-import { RequestInfo } from "../base/RequestInfo";
+import { RequestInfo } from "../base/requestInfo";
 import { enumDatabaseType } from '../base/enums';
 
 export class ApiDbHandler {
@@ -88,6 +88,21 @@ export class ApiDbHandler {
     }
   }
 
+  asyncPatchAll(requestInfo: RequestInfo, body: DynamicObject, answer:JsonResult): Promise<any> {
+    var self=this;
+    return new Promise((resolve, reject) => {
+      self.dao.updateAll(requestInfo, body, (error:Error,result:any) => {
+        if (error) reject(error);
+        if (result) {
+          answer.updatedIds=result;
+          answer.updated=answer.updatedIds.length;
+          answer.count=answer.updatedIds.length
+          answer.message = `Records(${answer.count}) updated in table '${requestInfo.tableName}'.`;
+          resolve(answer);
+        }
+      })
+    })
+  }
 
   asyncPatch(requestInfo: RequestInfo): Promise<any> {
     if (!this.dao.tableExists(requestInfo)) return Promise.resolve(new JsonResult(requestInfo, "Table " + (requestInfo.tableName) + " does not exist."))
@@ -99,10 +114,16 @@ export class ApiDbHandler {
     const promises: Promise<any>[] = [];
 
     if (postBody instanceof Array) {
+              //Jeroen: wat doen met postBodies zonder pk id => niet gebruiken?
       postBody.forEach(postItem => promises.push(self.asyncPatchOne(requestInfo, postItem[identityColumn],  postItem, identityColumn, answer)));
       return Promise.all(promises);
     }
-    else return this.asyncPatchOne(requestInfo, postBody[identityColumn] , postBody, identityColumn, answer);
+    else {
+      if(postBody[identityColumn]){
+        return this.asyncPatchOne(requestInfo, postBody[identityColumn] , postBody, identityColumn, answer);
+      }
+      else return this.asyncPatchAll(requestInfo,postBody, answer)
+    }
   }
 
   asyncPutOne(requestInfo: RequestInfo, body:any, identityColumn:string, answer: JsonResult): Promise<any> {
@@ -226,7 +247,7 @@ export class ApiDbHandler {
       this.dao.deleteItem(requestInfo, requestInfo.id, (error:Error,result:any) => {
         if (error) reject(error);
         if (result) {
-          answer.deletedIds.push(result.item.id);
+          answer.deletedIds.push(result);
           answer.deleted++
           answer.message = `${answer.deleted} records deleted.`;
           resolve(answer);

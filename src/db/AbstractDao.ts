@@ -1,12 +1,12 @@
-import { JsonDatabase, DynamicObject } from "../base/custom";
-import { ApiDbHandler } from "./apiDbHandler";
-import { RequestInfo } from '../base/RequestInfo';
+import { RequestInfo } from '../base/requestInfo';
 import { AbstractSQL, ISQLBasic } from "../sql/abstractSql";
+import { ColumnPropertyJDB } from "../base/jsonDB";
 
 export interface IDaoBasic {
   connect(): any;
   addItem(requestInfo: RequestInfo, body: { [k: string]: any }, callback: any): any;
   updateItem(requestInfo: RequestInfo, id: any, body: { [k: string]: any }, callback: any): any;
+  updateAll(requestInfo: RequestInfo, body: { [k: string]: any }, callback: any): any;
   getItem(requestInfo: RequestInfo, itemId: string, callback: any): any;
   itemExists(requestInfo: RequestInfo, itemId: string, callback: any): any;
   getAllItems(requestInfo: RequestInfo, callback: any): any;
@@ -28,77 +28,17 @@ export interface IDaoBasic {
 
 export abstract class AbstractDao  {
   public db: any;
-  public tableProperties: JsonDatabase;
+  public dbInfo: ColumnPropertyJDB;
   public sqlStatements: ISQLBasic&AbstractSQL;
   constructor() {}
 
-  public tableExists(requestInfo: RequestInfo): boolean {
-    if (this.tableProperties.db.table_name) {
-      return (this.tableProperties.db.table_name[requestInfo.tableName]) ? true : false;
-    }
-    else return false;
-  }
-
-  public columnProperties(requestInfo: RequestInfo) {
-    if (this.tableProperties.db.table_name) return this.tableProperties.db.table_name[requestInfo.unitId];
-    return null;
-  }
-
-  public primaryKeyColumnName(requestInfo: RequestInfo) {
-    let ret: string;
-    this.tableProperties.db.table_name[requestInfo.unitId].forEach(column => {
-      if (column.column_is_pk) {
-        ret = column.column_name;
-      }
-    });
-    return ret;
-  }
-
-  public primaryKeys(tableName?: string) {
-    let ret: DynamicObject = {};
-    const tables: string[] = this.tableNames();
-    tables.forEach(table => {
-      this.tableProperties.db.table_name[table].forEach(column => {
-        if (!tableName || tableName == table) { if (column.column_is_pk) ret[table] = column.column_name; }
-      })
-    })
-    return ret;
-  }
-
-  public models(tableName?: string) {
-    const tables: string[] = this.tableNames();
-    const ret: DynamicObject = {};
-    let columns: string[];
-    let model: DynamicObject;
-    tables.forEach(table => {
-      model = {};
-      if (!tableName || tableName == table) {
-        this.tableProperties.db.table_name[table].forEach((column) => {
-          model[column.column_name] = column.data_type;
-        });
-        ret[table] = model;
-      }
-    });
-    return ret;
-  }
-
-  public tableNames(): string[] {
-    if (!this.tableProperties.db.table_type) return [];
-    else if (!this.tableProperties.db.table_type.table) return [];
-    return this.tableProperties.GetPropArray(
-      this.tableProperties.db.table_type.table,
-      "table_name"
-    );
-  };
-
-  public viewNames (): string[] {
-    if (!this.tableProperties.db.table_type) return [];
-    else if (!this.tableProperties.db.table_type.view) return [];
-    return this.tableProperties.GetPropArray(
-      this.tableProperties.db.table_type.view,
-      "table_name"
-    );
-  };
+  public models = (tableName?: string) => {return this.dbInfo.models(tableName)}
+  public primaryKeys=(tableName?: string)=>{return this.dbInfo.primaryKeys(tableName)}
+  public tableNames=():string[]=>{return this.dbInfo.tableNames();}
+  public viewNames=():string[]=>{return this.dbInfo.viewNames();}
+  public tableExists=(requestInfo: RequestInfo):boolean=>{return this.dbInfo.tableExists(requestInfo.tableName);}
+  public columnProperties=(requestInfo: RequestInfo)=>{return this.dbInfo.columnProperties(requestInfo.tableName);}
+  public primaryKeyColumnName=(requestInfo: RequestInfo)=>{return this.dbInfo.primaryKeyColumnName(requestInfo.tableName);}
 }
 
 

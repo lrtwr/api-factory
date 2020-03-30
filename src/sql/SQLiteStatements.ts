@@ -1,8 +1,8 @@
-import { RequestInfo } from '../base/RequestInfo';
+import { RequestInfo } from '../base/requestInfo';
 import { AbstractSQL } from './abstractSql';
 
 export class SQLiteStatements extends AbstractSQL {
-  GetTableColumnInfoStatement() {
+  tableColumnInfo() {
     return `SELECT m.name AS table_name, 
     p.name AS column_name,
     m.type As table_type,
@@ -11,17 +11,17 @@ export class SQLiteStatements extends AbstractSQL {
   FROM sqlite_master m
   JOIN pragma_table_info((m.name)) p`;
   }
-  CreateTable(requestInfo: RequestInfo) {
+  createTable(requestInfo: RequestInfo) {
     return `CREATE TABLE IF NOT EXISTS '${requestInfo.tableName}' (
     "Id"	INTEGER PRIMARY KEY AUTOINCREMENT
   )`;
   }
 
-  DeleteTable(requestInfo: RequestInfo) {
+  deleteTable(requestInfo: RequestInfo) {
     return `DROP TABLE IF EXISTS '${requestInfo.tableName}'`;
   }
 
-  CreateColumn(requestInfo: RequestInfo) {
+  createColumn(requestInfo: RequestInfo) {
     const tableName = requestInfo.tableName;
     const columnName = requestInfo.columnName;
     let columnType: string;

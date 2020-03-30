@@ -57,6 +57,7 @@ var config = CreateSQLiteConfiguration({
 api.Connect(config);
 
 
-
+Rules:
+No spaces in column names in where part of the request {"where":{"column name":"not possible"}}
 
 

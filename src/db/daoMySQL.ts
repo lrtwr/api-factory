@@ -1,11 +1,12 @@
-import { Configuration, JsonDatabase } from '../base/custom';
+import { Configuration } from '../base/custom';
 import * as mysql from "mysql";
 import { AbstractDao, IDaoBasic } from "./AbstractDao";
 import { RunningStatus } from "../base/custom";
 import { enumRunningStatus } from "../base/enums";
 import { MySQLStatements } from '../sql/MySQLStatements';
-import { RequestInfo } from '../base/RequestInfo';
+import { RequestInfo } from '../base/requestInfo';
 import { AbstractApiRouting } from '../imp/ApiRouting';
+import { ColumnPropertyJDB } from '../base/jsonDB';
 
 
 export class DaoMySQL extends AbstractDao implements IDaoBasic {
@@ -31,7 +32,7 @@ export class DaoMySQL extends AbstractDao implements IDaoBasic {
     this.status = server.status;
     this.sqlStatements = new MySQLStatements();
   }
-
+ 
   async open(callback?: any) {
     this.db = mysql.createConnection({
       host: this.config.host,
@@ -69,16 +70,13 @@ export class DaoMySQL extends AbstractDao implements IDaoBasic {
   };
 
   getDbInfo(callback?: any) {
-    const sql = this.sqlStatements.GetTableColumnInfoStatement(this.config.database);
+    const sql = this.sqlStatements.tableColumnInfo(this.config.database);
     const self = this;
     this.executeSql(sql, (error: Error, result: any) => {
       if (error && callback) callback(error);
       if (result) {
         result.forEach((row: any) => { row.table_name = row.table_name.toLowerCase() })
-        self.tableProperties = new JsonDatabase(result, [
-          "table_name",
-          "table_type"
-        ]);
+        self.dbInfo = new ColumnPropertyJDB(result);
       }
       if (callback) callback(null, "1");
     });
@@ -86,7 +84,7 @@ export class DaoMySQL extends AbstractDao implements IDaoBasic {
 
   createTable(requestInfo: RequestInfo, callback: any) {
     let tableProp = this.columnProperties(requestInfo);
-    const sql = this.sqlStatements.CreateTable(requestInfo);
+    const sql = this.sqlStatements.createTable(requestInfo);
     this.executeSql(sql, (error: Error, result: any) => {
       if (error) callback(error);
       this.getDbInfo((error: Error) => {
@@ -101,7 +99,7 @@ export class DaoMySQL extends AbstractDao implements IDaoBasic {
 
   deleteTable(requestInfo: RequestInfo, callback: any) {
     let tableProp = this.columnProperties(requestInfo);
-    const sql = this.sqlStatements.DeleteTable(requestInfo);
+    const sql = this.sqlStatements.deleteTable(requestInfo);
     this.executeSql(sql, (error: Error) => {
       if (error) callback(error);
       this.getDbInfo((error: Error) => {
@@ -118,7 +116,7 @@ export class DaoMySQL extends AbstractDao implements IDaoBasic {
     let tableProp = this.models();
     if (tableProp[requestInfo.tableName][requestInfo.columnName]) callback(null, "Column '" + requestInfo.columnName + " from table " + (requestInfo.tableName) + "' already exists.");
     else {
-      const sql = this.sqlStatements.CreateColumn(requestInfo);
+      const sql = this.sqlStatements.createColumn(requestInfo);
       this.executeSql(sql, (error: Error, result: any) => {
         if (error) callback(error);
         this.getDbInfo((error: Error, result: any) => {
@@ -143,7 +141,7 @@ export class DaoMySQL extends AbstractDao implements IDaoBasic {
 
   async getItem(requestInfo: RequestInfo, itemId: any, callback: any) {
     const identityColumn = this.primaryKeyColumnName(requestInfo);
-    const sql: string = this.sqlStatements.GetSelectWithIdStatement(
+    const sql: string = this.sqlStatements.selectWithId(
       requestInfo,
       identityColumn,
       itemId
@@ -155,7 +153,7 @@ export class DaoMySQL extends AbstractDao implements IDaoBasic {
   }
 
   async getAllItems(requestInfo: RequestInfo, callback: any) {
-    const sql = this.sqlStatements.GetSelectFromRequestInfo(requestInfo);
+    const sql = this.sqlStatements.selectFromRequestInfo(requestInfo);
     this.executeSql(sql, (error: Error, result: any) => {
       if (error) callback(error);
       callback(null, result);
@@ -163,7 +161,7 @@ export class DaoMySQL extends AbstractDao implements IDaoBasic {
   }
 
   async countItems(requestInfo: RequestInfo, callback: any) {
-    const sql = this.sqlStatements.GetCountSelectRequestInfo(requestInfo);
+    const sql = this.sqlStatements.countSelectRequestInfo(requestInfo);
     this.executeSql(sql, (error: Error, result: any) => {
       if (error) callback(error);
       if (result) callback(null, result);
@@ -173,7 +171,7 @@ export class DaoMySQL extends AbstractDao implements IDaoBasic {
 
   async addItem(requestInfo: RequestInfo, body: { [k: string]: any }, callback: any) {
     const columnProperties = this.columnProperties(requestInfo);
-    let sql = this.sqlStatements.GetInsertStatement(
+    let sql = this.sqlStatements.insert(
       requestInfo,
       body,
       columnProperties,
@@ -188,7 +186,7 @@ export class DaoMySQL extends AbstractDao implements IDaoBasic {
   async updateItem(requestInfo: RequestInfo, id: any, body: { [k: string]: any }, callback: any) {
     const columnProperties = this.columnProperties(requestInfo);
     const identityColumn = this.primaryKeyColumnName(requestInfo);
-    let sql = this.sqlStatements.GetUpdateFromBodyStatement(
+    let sql = this.sqlStatements.updateWithIdFromBody(
       requestInfo,
       id,
       identityColumn,
@@ -201,9 +199,24 @@ export class DaoMySQL extends AbstractDao implements IDaoBasic {
     })
   }
 
+  updateAll(requestInfo: RequestInfo, body: { [k: string]: any; }, callback: any) {
+    const columnProperties = this.columnProperties(requestInfo);
+    let sql = this.sqlStatements.updateFromBody(
+      requestInfo,
+      columnProperties,
+      body
+    );
+    
+    this.executeSql(sql, function (error: Error, result?: any) {
+      if (error) callback(error);
+      if (result) callback(null, 1);
+      else callback(null, 1);
+    })
+  }
+
   itemExists(requestInfo: RequestInfo, itemId: any, callback: any) {
     const identityColumn = this.primaryKeyColumnName(requestInfo);
-    const sql: string = this.sqlStatements.GetIdExistStatement(
+    const sql: string = this.sqlStatements.idExist(
       requestInfo,
       identityColumn,
       itemId
@@ -216,7 +229,7 @@ export class DaoMySQL extends AbstractDao implements IDaoBasic {
 
   async deleteItem(requestInfo: RequestInfo, itemId: any, callback: any) {
     const identityColumn = this.primaryKeyColumnName(requestInfo);
-    const sql: string = this.sqlStatements.GetDeleteWithIdStatement(
+    const sql: string = this.sqlStatements.deleteWithId(
       requestInfo,
       identityColumn,
       itemId

@@ -72,16 +72,16 @@ var AbstractApiRouting = /** @class */ (function () {
         //this.app.use( Morgan(':method :url :status :res[content-length] - :response-time ms'))
         //this.app.use(Morgan(':remote-addr - :remote-user ":method :url " :status :res[content-length] ":referrer" ":user-agent"'))
         this.app.use("/Environment", function (req, res) { return _this.environment(res); });
-        //this.app.use(Morgan('tiny'));
-        this.app.use(Morgan(function (tokens, req, res) {
-            return [
-                tokens.method(req, res),
-                tokens.url(req, res),
-                tokens.status(req, res),
-                tokens.res(req, res, 'content-length'), '-',
-                tokens['response-time'](req, res), 'ms'
-            ].join(' ') + " ProcessId:" + process.pid;
-        }));
+        this.app.use(Morgan('tiny'));
+        // this.app.use(Morgan(function (tokens, req, res) {
+        //   return [
+        //     tokens.method(req, res),
+        //     tokens.url(req, res),
+        //     tokens.status(req, res),
+        //     tokens.res(req, res, 'content-length'), '-',
+        //     tokens['response-time'](req, res), 'ms'
+        //   ].join(' ')+" ProcessId:" +process.pid
+        // }))
     }
     AbstractApiRouting.prototype.systemApis = function () {
         var _this = this;
@@ -90,14 +90,16 @@ var AbstractApiRouting = /** @class */ (function () {
         this.createColumn();
         this.createForeignKey();
         this.app.use("/system/TableNames", function (req, res) { return res.json(_this.server.responseDirector.apiDb.dao.tableNames()); });
-        this.addRouteList("/system/TableNames", "*", "Database Tablenames.");
+        this.addRouteList("/system/TableNames", "*", "Database tablenames.");
+        this.app.use("/system/ViewNames", function (req, res) { return res.json(_this.server.responseDirector.apiDb.dao.viewNames()); });
+        this.addRouteList("/system/ViewNames", "*", "Database viewnames.");
         this.app.use("/system/ModelInfo/:id", function (req, res) { return res.json(_this.server.responseDirector.apiDb.dao.models(req.params.id)); });
         this.addRouteList("/system/ModelInfo", "*/tableName", "Database Model Definition id: tablename");
         this.app.use("/system/ModelInfo", function (req, res) { return res.json(_this.server.responseDirector.apiDb.dao.models()); });
         this.addRouteList("/system/ModelInfo", "*", "Database Model Definition.");
         this.addRouteList("/system/ColumnInfo/:id", "*/tableName", "Column properties id: tablename");
         this.app.use("/system/ColumnInfo/:id", function (req, res) { return res.json(_this.server.responseDirector.apiDb.dao.columnProperties(req.params.id)); });
-        this.app.use("/system/ColumnInfo", function (req, res) { return res.json(_this.server.responseDirector.apiDb.dao.tableProperties.baseArray); });
+        this.app.use("/system/ColumnInfo", function (req, res) { return res.json(_this.server.responseDirector.apiDb.dao.dbInfo.baseArray); });
         this.addRouteList("/system/ColumnInfo", "*/tableName", "Database Column Definition.");
         this.app.use("/system/PrimaryKeys/:id", function (req, res) { return res.json(_this.server.responseDirector.apiDb.dao.primaryKeys(req.params.id)); });
         this.addRouteList("/system/PrimaryKeys/:id", "*/tableName", "Get PrimaryKey id: tablename");

@@ -49,11 +49,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var custom_1 = require("../base/custom");
 var mysql = require("mysql");
 var AbstractDao_1 = require("./AbstractDao");
 var enums_1 = require("../base/enums");
 var MySQLStatements_1 = require("../sql/MySQLStatements");
+var jsonDB_1 = require("../base/jsonDB");
 var DaoMySQL = /** @class */ (function (_super) {
     __extends(DaoMySQL, _super);
     function DaoMySQL(server, callback) {
@@ -130,17 +130,14 @@ var DaoMySQL = /** @class */ (function (_super) {
     };
     ;
     DaoMySQL.prototype.getDbInfo = function (callback) {
-        var sql = this.sqlStatements.GetTableColumnInfoStatement(this.config.database);
+        var sql = this.sqlStatements.tableColumnInfo(this.config.database);
         var self = this;
         this.executeSql(sql, function (error, result) {
             if (error && callback)
                 callback(error);
             if (result) {
                 result.forEach(function (row) { row.table_name = row.table_name.toLowerCase(); });
-                self.tableProperties = new custom_1.JsonDatabase(result, [
-                    "table_name",
-                    "table_type"
-                ]);
+                self.dbInfo = new jsonDB_1.ColumnPropertyJDB(result);
             }
             if (callback)
                 callback(null, "1");
@@ -149,7 +146,7 @@ var DaoMySQL = /** @class */ (function (_super) {
     DaoMySQL.prototype.createTable = function (requestInfo, callback) {
         var _this = this;
         var tableProp = this.columnProperties(requestInfo);
-        var sql = this.sqlStatements.CreateTable(requestInfo);
+        var sql = this.sqlStatements.createTable(requestInfo);
         this.executeSql(sql, function (error, result) {
             if (error)
                 callback(error);
@@ -166,7 +163,7 @@ var DaoMySQL = /** @class */ (function (_super) {
     DaoMySQL.prototype.deleteTable = function (requestInfo, callback) {
         var _this = this;
         var tableProp = this.columnProperties(requestInfo);
-        var sql = this.sqlStatements.DeleteTable(requestInfo);
+        var sql = this.sqlStatements.deleteTable(requestInfo);
         this.executeSql(sql, function (error) {
             if (error)
                 callback(error);
@@ -186,7 +183,7 @@ var DaoMySQL = /** @class */ (function (_super) {
         if (tableProp[requestInfo.tableName][requestInfo.columnName])
             callback(null, "Column '" + requestInfo.columnName + " from table " + (requestInfo.tableName) + "' already exists.");
         else {
-            var sql = this.sqlStatements.CreateColumn(requestInfo);
+            var sql = this.sqlStatements.createColumn(requestInfo);
             this.executeSql(sql, function (error, result) {
                 if (error)
                     callback(error);
@@ -214,7 +211,7 @@ var DaoMySQL = /** @class */ (function (_super) {
             var identityColumn, sql;
             return __generator(this, function (_a) {
                 identityColumn = this.primaryKeyColumnName(requestInfo);
-                sql = this.sqlStatements.GetSelectWithIdStatement(requestInfo, identityColumn, itemId);
+                sql = this.sqlStatements.selectWithId(requestInfo, identityColumn, itemId);
                 this.executeSql(sql, function (error, result) {
                     if (error)
                         callback(error);
@@ -228,7 +225,7 @@ var DaoMySQL = /** @class */ (function (_super) {
         return __awaiter(this, void 0, void 0, function () {
             var sql;
             return __generator(this, function (_a) {
-                sql = this.sqlStatements.GetSelectFromRequestInfo(requestInfo);
+                sql = this.sqlStatements.selectFromRequestInfo(requestInfo);
                 this.executeSql(sql, function (error, result) {
                     if (error)
                         callback(error);
@@ -242,7 +239,7 @@ var DaoMySQL = /** @class */ (function (_super) {
         return __awaiter(this, void 0, void 0, function () {
             var sql;
             return __generator(this, function (_a) {
-                sql = this.sqlStatements.GetCountSelectRequestInfo(requestInfo);
+                sql = this.sqlStatements.countSelectRequestInfo(requestInfo);
                 this.executeSql(sql, function (error, result) {
                     if (error)
                         callback(error);
@@ -259,7 +256,7 @@ var DaoMySQL = /** @class */ (function (_super) {
             var columnProperties, sql;
             return __generator(this, function (_a) {
                 columnProperties = this.columnProperties(requestInfo);
-                sql = this.sqlStatements.GetInsertStatement(requestInfo, body, columnProperties, "`", "`");
+                sql = this.sqlStatements.insert(requestInfo, body, columnProperties, "`", "`");
                 this.executeSql(sql, function (error, result) {
                     if (error)
                         callback(error);
@@ -276,7 +273,7 @@ var DaoMySQL = /** @class */ (function (_super) {
             return __generator(this, function (_a) {
                 columnProperties = this.columnProperties(requestInfo);
                 identityColumn = this.primaryKeyColumnName(requestInfo);
-                sql = this.sqlStatements.GetUpdateFromBodyStatement(requestInfo, id, identityColumn, columnProperties, body, "`", "`");
+                sql = this.sqlStatements.updateWithIdFromBody(requestInfo, id, identityColumn, columnProperties, body, "`", "`");
                 this.executeSql(sql, function (error) {
                     if (error)
                         callback(error);
@@ -286,9 +283,21 @@ var DaoMySQL = /** @class */ (function (_super) {
             });
         });
     };
+    DaoMySQL.prototype.updateAll = function (requestInfo, body, callback) {
+        var columnProperties = this.columnProperties(requestInfo);
+        var sql = this.sqlStatements.updateFromBody(requestInfo, columnProperties, body);
+        this.executeSql(sql, function (error, result) {
+            if (error)
+                callback(error);
+            if (result)
+                callback(null, 1);
+            else
+                callback(null, 1);
+        });
+    };
     DaoMySQL.prototype.itemExists = function (requestInfo, itemId, callback) {
         var identityColumn = this.primaryKeyColumnName(requestInfo);
-        var sql = this.sqlStatements.GetIdExistStatement(requestInfo, identityColumn, itemId);
+        var sql = this.sqlStatements.idExist(requestInfo, identityColumn, itemId);
         this.executeSql(sql, function (error, result) {
             if (error)
                 callback(error);
@@ -300,7 +309,7 @@ var DaoMySQL = /** @class */ (function (_super) {
             var identityColumn, sql;
             return __generator(this, function (_a) {
                 identityColumn = this.primaryKeyColumnName(requestInfo);
-                sql = this.sqlStatements.GetDeleteWithIdStatement(requestInfo, identityColumn, itemId);
+                sql = this.sqlStatements.deleteWithId(requestInfo, identityColumn, itemId);
                 this.executeSql(sql, function (error, result) {
                     if (error)
                         callback(error);

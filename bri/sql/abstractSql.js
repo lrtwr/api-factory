@@ -2,20 +2,20 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var AbstractSQL = /** @class */ (function () {
     function AbstractSQL() {
-        this.GetSelectWithIdStatement = function (requestInfo, identityColumn, id) {
+        this.selectWithId = function (requestInfo, identityColumn, id) {
             return "select * from " + requestInfo.tableName + " where " + identityColumn + " = '" + id + "';";
         };
     }
-    AbstractSQL.prototype.GetDeleteWithIdStatement = function (requestInfo, identityColumn, id) {
+    AbstractSQL.prototype.deleteWithId = function (requestInfo, identityColumn, id) {
         return "Delete from " + requestInfo.tableName + " where " + identityColumn + " = " + id + ";";
     };
-    AbstractSQL.prototype.GetIdExistStatement = function (requestInfo, identityColumn, id) {
+    AbstractSQL.prototype.idExist = function (requestInfo, identityColumn, id) {
         return "SELECT " + identityColumn + " FROM " + requestInfo.tableName + " where " + identityColumn + " = " + id;
     };
-    AbstractSQL.prototype.GetCountStatement = function (requestInfo) {
+    AbstractSQL.prototype.count = function (requestInfo) {
         return "SELECT COUNT(*) AS count FROM " + requestInfo.tableName;
     };
-    AbstractSQL.prototype.GetCountSelectRequestInfo = function (requestInfo) {
+    AbstractSQL.prototype.countSelectRequestInfo = function (requestInfo) {
         var selectPart = "";
         var wherePart = "";
         var orderPart = "";
@@ -26,7 +26,7 @@ var AbstractSQL = /** @class */ (function () {
             orderPart = " order by " + requestInfo.sqlorder;
         return (selectPart + wherePart + orderPart).trim() + ";";
     };
-    AbstractSQL.prototype.GetSelectFromRequestInfo = function (requestInfo) {
+    AbstractSQL.prototype.selectFromRequestInfo = function (requestInfo) {
         var selectPart = "";
         var wherePart = "";
         var orderPart = "";
@@ -39,7 +39,7 @@ var AbstractSQL = /** @class */ (function () {
             orderPart = " order by " + requestInfo.sqlorder;
         return (selectPart + wherePart + orderPart).trim() + ";";
     };
-    AbstractSQL.prototype.GetUpdateFromBodyStatement = function (requestInfo, id, identityColumn, tableColumnProperties, updateInfo, lDelimiter, rDelimiter) {
+    AbstractSQL.prototype.updateWithIdFromBody = function (requestInfo, id, identityColumn, tableColumnProperties, updateInfo, lDelimiter, rDelimiter) {
         if (lDelimiter === void 0) { lDelimiter = "'"; }
         if (rDelimiter === void 0) { rDelimiter = "'"; }
         var sql = "Update " + lDelimiter + requestInfo.tableName + rDelimiter + " Set ";
@@ -48,8 +48,9 @@ var AbstractSQL = /** @class */ (function () {
         var pkDelimiter = "";
         for (var i = 0; i < tableColumnProperties.length; i++) {
             var prop = tableColumnProperties[i];
-            if (prop.column_name == identityColumn)
-                pkDataType = prop.data_type;
+            if (id)
+                if (prop.column_name == identityColumn)
+                    pkDataType = prop.data_type;
             if (updateInfo[prop.column_name] != null) {
                 if (prop.column_is_pk == 0) {
                     setArray.push(lDelimiter + prop.column_name + rDelimiter + "=");
@@ -71,19 +72,66 @@ var AbstractSQL = /** @class */ (function () {
                 }
             }
         }
-        switch (pkDataType) {
-            case "TEXT":
-            case "UNIQUEIDENTIFIER":
-            case "NVARCHAR":
-            case "VARCHAR":
-                pkDelimiter = "'";
-                break;
+        if (id) {
+            switch (pkDataType) {
+                case "TEXT":
+                case "UNIQUEIDENTIFIER":
+                case "NVARCHAR":
+                case "VARCHAR":
+                    pkDelimiter = "'";
+                    break;
+            }
         }
-        return (sql +
-            setArray.join(", ") +
-            (" Where " + identityColumn + "=" + pkDelimiter + id + pkDelimiter));
+        sql += setArray.join(", ");
+        if (id)
+            +(" Where " + identityColumn + "=" + pkDelimiter + id + pkDelimiter);
+        return sql;
     };
-    AbstractSQL.prototype.GetUpdateStatement = function (requestInfo, identityColumn, tableColumnProperties, request) {
+    AbstractSQL.prototype.updateFromBody = function (requestInfo, tableColumnProperties, updateInfo, lDelimiter, rDelimiter) {
+        if (lDelimiter === void 0) { lDelimiter = "'"; }
+        if (rDelimiter === void 0) { rDelimiter = "'"; }
+        var sql = "Update " + lDelimiter + requestInfo.tableName + rDelimiter + " Set ";
+        var setArray = [];
+        for (var i = 0; i < tableColumnProperties.length; i++) {
+            var prop = tableColumnProperties[i];
+            if (updateInfo[prop.column_name] != null) {
+                if (prop.column_is_pk == 0) {
+                    setArray.push(lDelimiter + prop.column_name + rDelimiter + "=");
+                    switch (prop.data_type) {
+                        case "TEXT":
+                        case "NVARCHAR":
+                        case "VARCHAR":
+                            setArray[setArray.length - 1] +=
+                                "'" + updateInfo[prop.column_name] + "'";
+                            break;
+                        case "INTEGER":
+                        case "REAL":
+                        case "NUMERIC":
+                        case "INT":
+                        case "BIGINT":
+                            setArray[setArray.length - 1] += updateInfo[prop.column_name];
+                            break;
+                    }
+                }
+            }
+        }
+        sql += setArray.join(", ");
+        var wherePart = [];
+        if (requestInfo.sqlwhere) {
+            if (typeof requestInfo.sqlwhere == "object") {
+                var whereBody_1 = requestInfo.sqlwhere;
+                Object.keys(whereBody_1).forEach(function (key) {
+                    wherePart.push(key + "='" + whereBody_1[key] + "'");
+                });
+                sql += " Where " + wherePart.join(" And ");
+            }
+            else if (typeof requestInfo.sqlwhere == "string") {
+                sql += " Where " + requestInfo.sqlwhere;
+            }
+        }
+        return sql;
+    };
+    AbstractSQL.prototype.update = function (requestInfo, identityColumn, tableColumnProperties, request) {
         var sql = "Update " + requestInfo.tableName + " Set ";
         var setArray = [];
         var updateInfo = request.body.update != null ? request.body.update : {};
@@ -114,7 +162,7 @@ var AbstractSQL = /** @class */ (function () {
             setArray.join(", ") +
             (" Where " + identityColumn + "=" + request.params.id));
     };
-    AbstractSQL.prototype.GetInsertStatement = function (requestInfo, body, columnProperties, ldelimiter, rdelimiter) {
+    AbstractSQL.prototype.insert = function (requestInfo, body, columnProperties, ldelimiter, rdelimiter) {
         if (ldelimiter === void 0) { ldelimiter = "["; }
         if (rdelimiter === void 0) { rdelimiter = "]"; }
         var sql = "Insert into " + requestInfo.tableName + " ";

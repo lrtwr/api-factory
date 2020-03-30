@@ -19,16 +19,16 @@ var SQLiteStatements = /** @class */ (function (_super) {
     function SQLiteStatements() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
-    SQLiteStatements.prototype.GetTableColumnInfoStatement = function () {
+    SQLiteStatements.prototype.tableColumnInfo = function () {
         return "SELECT m.name AS table_name, \n    p.name AS column_name,\n    m.type As table_type,\n    p.type AS data_type,\n\tp.pk AS column_is_pk\n  FROM sqlite_master m\n  JOIN pragma_table_info((m.name)) p";
     };
-    SQLiteStatements.prototype.CreateTable = function (requestInfo) {
+    SQLiteStatements.prototype.createTable = function (requestInfo) {
         return "CREATE TABLE IF NOT EXISTS '" + requestInfo.tableName + "' (\n    \"Id\"\tINTEGER PRIMARY KEY AUTOINCREMENT\n  )";
     };
-    SQLiteStatements.prototype.DeleteTable = function (requestInfo) {
+    SQLiteStatements.prototype.deleteTable = function (requestInfo) {
         return "DROP TABLE IF EXISTS '" + requestInfo.tableName + "'";
     };
-    SQLiteStatements.prototype.CreateColumn = function (requestInfo) {
+    SQLiteStatements.prototype.createColumn = function (requestInfo) {
         var tableName = requestInfo.tableName;
         var columnName = requestInfo.columnName;
         var columnType;
