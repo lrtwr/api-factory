@@ -49,9 +49,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var custom_1 = require("./../base/custom");
 var CosmosClient = require('@azure/cosmos').CosmosClient;
 var AbstractDao_1 = require("./AbstractDao");
+var custom_1 = require("./../base/custom");
 var enums_1 = require("../base/enums");
 var DaoCosmos = /** @class */ (function (_super) {
     __extends(DaoCosmos, _super);

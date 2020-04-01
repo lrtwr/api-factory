@@ -5,7 +5,7 @@ import * as $$ from "./ApiMatic"
 
 let i=6800;
 //$$.connectSQLiteMemory(i++);
-$$.connect($$.defaultConfig,i++);
+$$.connect($$.jalMSSQL,i++);
 
 // $$.connectAdmin($$.jalDevelopMySQL,i++);
 // $$.connectAdmin($$.jalDevelopMariaDB,i++);

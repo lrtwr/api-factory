@@ -101,10 +101,12 @@ exports.jalMySQL = exports.createMySQLConfiguration({
     port: 3306
 });
 exports.jalMSSQL = exports.createMSSQLConfiguration({
-    database: "AngSQL",
+    database: "ApiMatic",
     user: "sa",
     password: "Jovibo",
     server: "JAL"
+    // server: "127.0.0.1"
+    // server: "localhost"
 });
 exports.jalMongo = exports.createMongoConfiguration({
     connectionString: "mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass%20Community&ssl=false",

@@ -1,13 +1,12 @@
-import { CloneObjectInfo } from './../base/custom';
-import { ApiServer } from './../imp/ApiServer';
-import { RequestInfo } from '../base/requestInfo';
-import { DynamicObject, Configuration } from '../base/custom';
-
 const CosmosClient = require('@azure/cosmos').CosmosClient
-import { AbstractDao, IDaoBasic } from './AbstractDao';
-import { RunningStatus } from '../base/custom';
-import { enumRunningStatus } from '../base/enums';
 import { AbstractApiRouting } from '../imp/ApiRouting';
+import { AbstractDao, IDaoBasic } from './AbstractDao';
+import { ApiServer } from './../imp/ApiServer';
+import { CloneObjectInfo } from './../base/custom';
+import { DynamicObject, Configuration } from '../base/custom';
+import { enumRunningStatus } from '../base/enums';
+import { RequestInfo } from '../base/requestInfo';
+import { RunningStatus } from '../base/custom';
 
 export class DaoCosmos extends AbstractDao implements IDaoBasic {
     primaryKeyColumnName = (requestInfo: RequestInfo) => { return "id"; }

@@ -49,11 +49,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var SQLiteStatements_1 = require("../sql/SQLiteStatements");
-var enums_1 = require("../base/enums");
-var sqlite3 = require("sqlite3");
 var AbstractDao_1 = require("./AbstractDao");
 var jsonDB_1 = require("../base/jsonDB");
+var enums_1 = require("../base/enums");
+var SQLiteStatements_1 = require("../sql/SQLiteStatements");
+var sqlite3 = require("sqlite3");
 sqlite3.verbose();
 var DaoSQLite = /** @class */ (function (_super) {
     __extends(DaoSQLite, _super);

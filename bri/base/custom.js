@@ -42,6 +42,16 @@ exports.CloneObjectInfo = function (fromObj, toObj) {
         toObj[key] = fromObj[key];
     });
 };
+// Jeroen: Bruikbaar?
+function using(resource, func) {
+    try {
+        func(resource);
+    }
+    finally {
+        resource.dispose();
+    }
+}
+exports.using = using;
 function asyncUsing(resource, func) {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
@@ -62,15 +72,6 @@ function asyncUsing(resource, func) {
     });
 }
 exports.asyncUsing = asyncUsing;
-function using(resource, func) {
-    try {
-        func(resource);
-    }
-    finally {
-        resource.dispose();
-    }
-}
-exports.using = using;
 ///eind
 var JsonResult = /** @class */ (function () {
     function JsonResult(requestInfo, message) {

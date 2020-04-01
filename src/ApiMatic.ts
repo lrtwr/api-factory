@@ -134,10 +134,12 @@ export const jalMySQL = createMySQLConfiguration({
 });
 
 export const jalMSSQL = createMSSQLConfiguration({
-  database: "AngSQL",
+  database: "ApiMatic",
   user: "sa",
   password: "Jovibo",
   server: "JAL"
+  // server: "127.0.0.1"
+  // server: "localhost"
 });
 
 export const jalMongo = createMongoConfiguration({

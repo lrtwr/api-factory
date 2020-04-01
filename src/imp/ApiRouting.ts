@@ -1,6 +1,7 @@
-import { DynamicObject } from './../base/custom';
 import { ApiServer } from './ApiServer';
 import { Configuration } from '../base/custom';
+import { DynamicObject } from './../base/custom';
+import { RequestInfo } from '../base/requestInfo';
 import * as BodyParser from "body-parser";
 import * as Morgan from 'morgan'
 
@@ -55,10 +56,10 @@ export abstract class AbstractApiRouting {
     this.addRouteList("/system/ModelInfo", "*/tableName", "Database Model Definition id: tablename");
     this.app.use(`/system/ModelInfo`, (req:any, res:any) => res.json(this.server.responseDirector.apiDb.dao.models()));
     this.addRouteList("/system/ModelInfo", "*", "Database Model Definition.");
-    this.addRouteList(`/system/ColumnInfo/:id`, "*/tableName", "Column properties id: tablename");
-    this.app.use(`/system/ColumnInfo/:id`, (req:any, res:any) => res.json(this.server.responseDirector.apiDb.dao.columnProperties(req.params.id)));
-    this.app.use(`/system/ColumnInfo`, (req:any, res:any) => res.json(this.server.responseDirector.apiDb.dao.dbInfo.baseArray));
+    this.addRouteList(`/system/ColumnInfo/:tablename`, "*/tableName", "Column properties tablename");
+    this.app.use(`/system/ColumnInfo/:tablename`, (req:any, res:any) => res.json(this.server.responseDirector.apiDb.dao.dbInfo.columnPropertiesNested(new RequestInfo(req).tableName)));
     this.addRouteList("/system/ColumnInfo", "*/tableName", "Database Column Definition.");
+    this.app.use(`/system/ColumnInfo`, (req:any, res:any) => res.json(this.server.responseDirector.apiDb.dao.dbInfo.columnPropertiesNested(null)));
     this.app.use(`/system/PrimaryKeys/:id`, (req:any, res:any) => res.json(this.server.responseDirector.apiDb.dao.primaryKeys(req.params.id)));
     this.addRouteList("/system/PrimaryKeys/:id", "*/tableName", "Get PrimaryKey id: tablename");
     this.app.use(`/system/PrimaryKeys`, (req:any, res:any) => res.json(this.server.responseDirector.apiDb.dao.primaryKeys()));

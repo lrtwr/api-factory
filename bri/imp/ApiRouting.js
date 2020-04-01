@@ -49,6 +49,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var requestInfo_1 = require("../base/requestInfo");
 var BodyParser = require("body-parser");
 var Morgan = require("morgan");
 var AbstractApiRouting = /** @class */ (function () {
@@ -97,10 +98,10 @@ var AbstractApiRouting = /** @class */ (function () {
         this.addRouteList("/system/ModelInfo", "*/tableName", "Database Model Definition id: tablename");
         this.app.use("/system/ModelInfo", function (req, res) { return res.json(_this.server.responseDirector.apiDb.dao.models()); });
         this.addRouteList("/system/ModelInfo", "*", "Database Model Definition.");
-        this.addRouteList("/system/ColumnInfo/:id", "*/tableName", "Column properties id: tablename");
-        this.app.use("/system/ColumnInfo/:id", function (req, res) { return res.json(_this.server.responseDirector.apiDb.dao.columnProperties(req.params.id)); });
-        this.app.use("/system/ColumnInfo", function (req, res) { return res.json(_this.server.responseDirector.apiDb.dao.dbInfo.baseArray); });
+        this.addRouteList("/system/ColumnInfo/:tablename", "*/tableName", "Column properties tablename");
+        this.app.use("/system/ColumnInfo/:tablename", function (req, res) { return res.json(_this.server.responseDirector.apiDb.dao.dbInfo.columnPropertiesNested(new requestInfo_1.RequestInfo(req).tableName)); });
         this.addRouteList("/system/ColumnInfo", "*/tableName", "Database Column Definition.");
+        this.app.use("/system/ColumnInfo", function (req, res) { return res.json(_this.server.responseDirector.apiDb.dao.dbInfo.columnPropertiesNested(null)); });
         this.app.use("/system/PrimaryKeys/:id", function (req, res) { return res.json(_this.server.responseDirector.apiDb.dao.primaryKeys(req.params.id)); });
         this.addRouteList("/system/PrimaryKeys/:id", "*/tableName", "Get PrimaryKey id: tablename");
         this.app.use("/system/PrimaryKeys", function (req, res) { return res.json(_this.server.responseDirector.apiDb.dao.primaryKeys()); });

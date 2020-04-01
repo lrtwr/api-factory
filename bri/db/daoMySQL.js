@@ -84,6 +84,9 @@ var DaoMySQL = /** @class */ (function (_super) {
         _this.sqlStatements = new MySQLStatements_1.MySQLStatements();
         return _this;
     }
+    DaoMySQL.prototype.columnPropertiesNested = function (requestInfo) {
+        throw new Error("Method not implemented.");
+    };
     DaoMySQL.prototype.open = function (callback) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {

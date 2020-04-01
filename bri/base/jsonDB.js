@@ -21,10 +21,11 @@ var DynamicClass = /** @class */ (function () {
 exports.DynamicClass = DynamicClass;
 var JsonDatabase = /** @class */ (function (_super) {
     __extends(JsonDatabase, _super);
-    function JsonDatabase(oArray, aProp) {
-        if (oArray === void 0) { oArray = []; }
+    function JsonDatabase(baseArray, aProp) {
+        if (baseArray === void 0) { baseArray = []; }
         if (aProp === void 0) { aProp = []; }
         var _this = _super.call(this) || this;
+        _this.baseArray = baseArray;
         _this["get"] = function (searchArray) {
             var obj = _this;
             for (var _i = 0, searchArray_1 = searchArray; _i < searchArray_1.length; _i++) {
@@ -42,17 +43,17 @@ var JsonDatabase = /** @class */ (function (_super) {
         _this["exist"] = function (searchArray) {
             return _this["get"](searchArray) != null ? true : false;
         };
-        if (oArray.length > 0 && aProp.length == 0)
-            aProp = Object.keys(oArray[0]);
-        if (oArray.length > 0 && aProp.length > 0) {
+        if (baseArray.length > 0 && aProp.length == 0)
+            aProp = Object.keys(baseArray[0]);
+        if (baseArray.length > 0 && aProp.length > 0) {
             if (!aProp)
-                aProp = Object.keys(oArray[0]);
+                aProp = Object.keys(baseArray[0]);
             _this["_keys"] = [];
             aProp.forEach(function (prop) {
                 _this["_keys"].push(prop);
                 if (!_this[prop])
                     _this[prop] = new DynamicClass();
-                oArray.forEach(function (obj) {
+                baseArray.forEach(function (obj) {
                     if (!_this[prop]["_keys"])
                         _this[prop]["_keys"] = [];
                     if (_this[prop]["_keys"].indexOf(obj[prop]) == -1)
@@ -68,7 +69,7 @@ var JsonDatabase = /** @class */ (function (_super) {
                         if (prop2 != prop) {
                             if (!_this[prop][obj[prop]][prop2])
                                 _this[prop][obj[prop]][prop2] = new DynamicClass();
-                            oArray.forEach(function (obj2) {
+                            baseArray.forEach(function (obj2) {
                                 if (obj2 == obj) {
                                     if (!_this[prop][obj[prop]][prop2]["_keys"])
                                         _this[prop][obj[prop]][prop2]["_keys"] = [];
@@ -110,8 +111,31 @@ var ColumnPropertyJDB = /** @class */ (function (_super) {
         return this.exist(["table_name", tableName]);
     };
     ColumnPropertyJDB.prototype.columnProperties = function (tableName) {
+        var _this = this;
         var _a;
-        return _a = this.get(["table_name", tableName, "_array"]), (_a !== null && _a !== void 0 ? _a : []);
+        if (tableName)
+            return _a = this.get(["table_name", tableName, "_array"]), (_a !== null && _a !== void 0 ? _a : []);
+        else {
+            var ret_1 = {};
+            this.tableNames().forEach(function (table) {
+                ret_1[table] = _this.get(["table_name", table, "_array"]);
+            });
+            return ret_1;
+        }
+    };
+    ColumnPropertyJDB.prototype.columnPropertiesNested = function (tableName) {
+        var _this = this;
+        var ret = {};
+        this.tableNames().forEach(function (table) {
+            if ((!tableName || tableName == table)) {
+                ret[table] = {};
+                var columns = _this.get(["table_name", table, "_array"]);
+                columns.forEach(function (column) {
+                    ret[table][column.column_name] = column;
+                });
+            }
+        });
+        return ret;
     };
     ColumnPropertyJDB.prototype.primaryKeyColumnName = function (tableName) {
         return this.get(["table_name", tableName, "column_is_pk", "1", "_array", "0", "column_name"]);
@@ -133,10 +157,25 @@ var ColumnPropertyJDB = /** @class */ (function (_super) {
             if (!tableName || tableName == table) {
                 ret[table] = {};
                 _this.table_name[table]._array.forEach(function (column) {
-                    ret[table][column.column_name] = column.data_type;
+                    ret[table][column.column_name] = _this.dataTypeEmptyValue(column.data_type);
                 });
             }
         });
+        return ret;
+    };
+    ColumnPropertyJDB.prototype.dataTypeEmptyValue = function (dataType) {
+        var ret;
+        switch (dataType) {
+            case ("NVARCHAR"):
+            case ("VARCHAR"):
+            case ("TEXT"):
+            case ("STRING"):
+            case ("UNIQUEIDENTIFIER"):
+                ret = "";
+                break;
+            default:
+                ret = null;
+        }
         return ret;
     };
     return ColumnPropertyJDB;

@@ -12,6 +12,13 @@ export const CloneObjectInfo = (fromObj: {[k: string]: any;}, toObj: {[k: string
 
 
 // Jeroen: Bruikbaar?
+export function using<T extends IDisposable>(resource: T, func: (resource: T) => void) {
+  try {
+      func(resource);
+  } finally {
+      resource.dispose();
+  }
+}
 export interface IDisposable {
   dispose(): Promise<void>;
 }
@@ -23,13 +30,7 @@ export async function asyncUsing<T extends IDisposable>(resource: T, func: (reso
   }
 }
 
-export function using<T extends IDisposable>(resource: T, func: (resource: T) => void) {
-  try {
-      func(resource);
-  } finally {
-      resource.dispose();
-  }
-}
+
 ///eind
 
 export class JsonResult {

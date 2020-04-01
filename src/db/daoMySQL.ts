@@ -32,6 +32,9 @@ export class DaoMySQL extends AbstractDao implements IDaoBasic {
     this.status = server.status;
     this.sqlStatements = new MySQLStatements();
   }
+  columnPropertiesNested(requestInfo: RequestInfo) {
+    throw new Error("Method not implemented.");
+  }
  
   async open(callback?: any) {
     this.db = mysql.createConnection({

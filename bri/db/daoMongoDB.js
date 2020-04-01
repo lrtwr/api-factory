@@ -49,9 +49,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var mongodb_1 = require("mongodb");
 var AbstractDao_1 = require("./AbstractDao");
 var enums_1 = require("../base/enums");
+var mongodb_1 = require("mongodb");
 var mongodb_2 = require("mongodb");
 var DaoMongo = /** @class */ (function (_super) {
     __extends(DaoMongo, _super);
@@ -121,6 +121,9 @@ var DaoMongo = /** @class */ (function (_super) {
         throw new Error("Method not implemented.");
     };
     DaoMongo.prototype.executeSql = function (sql, callback) {
+        throw new Error("Method not implemented.");
+    };
+    DaoMongo.prototype.columnPropertiesNested = function (requestInfo) {
         throw new Error("Method not implemented.");
     };
     DaoMongo.prototype.itemExists = function (unitId, itemId, callback) {

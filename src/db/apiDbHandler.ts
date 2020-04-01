@@ -1,9 +1,8 @@
+import { AbstractDao, IDaoBasic } from "./AbstractDao";
 import { ApiServer } from './../imp/ApiServer';
 import { Configuration, DynamicObject } from './../base/custom';
-import { RunningStatus, JsonResult } from "../base/custom";
-import { AbstractDao, IDaoBasic } from "./AbstractDao";
 import { RequestInfo } from "../base/requestInfo";
-import { enumDatabaseType } from '../base/enums';
+import { RunningStatus, JsonResult } from "../base/custom";
 
 export class ApiDbHandler {
   public db: any

@@ -1,11 +1,11 @@
-import { RequestInfo } from '../base/requestInfo';
-import { DynamicObject, Configuration } from '../base/custom';
-import { MongoClient } from "mongodb";
-import { AbstractDao, IDaoBasic } from './AbstractDao';
-import { RunningStatus } from '../base/custom';
-import { enumRunningStatus } from '../base/enums';
-import { ObjectID } from "mongodb";
 import { AbstractApiRouting } from '../imp/ApiRouting';
+import { AbstractDao, IDaoBasic } from './AbstractDao';
+import { DynamicObject, Configuration } from '../base/custom';
+import { enumRunningStatus } from '../base/enums';
+import { MongoClient } from "mongodb";
+import { ObjectID } from "mongodb";
+import { RequestInfo } from '../base/requestInfo';
+import { RunningStatus } from '../base/custom';
 
 export class DaoMongo extends AbstractDao implements IDaoBasic {
   public primaryKeyColumnName = (requestInfo: RequestInfo) =>{ return "_id"; }
@@ -65,6 +65,9 @@ export class DaoMongo extends AbstractDao implements IDaoBasic {
     super();
     this.config = server.config;
     this.status = server.status;
+  }
+  columnPropertiesNested(requestInfo: RequestInfo) {
+    throw new Error("Method not implemented.");
   }
 
   itemExists(unitId: any, itemId: any, callback: any) {

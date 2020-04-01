@@ -1,13 +1,12 @@
-import { ApiServer } from './../imp/ApiServer';
-import { Configuration, using, asyncUsing } from '../base/custom';
-import { SQLiteStatements } from "../sql/SQLiteStatements";
-import { RunningStatus } from "../base/custom";
-import { enumRunningStatus, enumDatabaseType } from "../base/enums";
-import * as sqlite3 from 'sqlite3';
-import { AbstractDao, IDaoBasic } from './AbstractDao';
-import { RequestInfo } from '../base/requestInfo';
 import { AbstractApiRouting } from '../imp/ApiRouting';
+import { AbstractDao, IDaoBasic } from './AbstractDao';
 import { ColumnPropertyJDB } from '../base/jsonDB';
+import { Configuration, using, asyncUsing } from '../base/custom';
+import { enumRunningStatus, enumDatabaseType } from "../base/enums";
+import { RequestInfo } from '../base/requestInfo';
+import { RunningStatus } from "../base/custom";
+import { SQLiteStatements } from "../sql/SQLiteStatements";
+import * as sqlite3 from 'sqlite3';
 sqlite3.verbose();
 
 export class DaoSQLite extends AbstractDao implements IDaoBasic {

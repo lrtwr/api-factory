@@ -1,5 +1,5 @@
-import { RequestInfo } from '../base/requestInfo';
 import { AbstractSQL } from "./abstractSql";
+import { RequestInfo } from '../base/requestInfo';
 
 
 export class MSSQLStatements extends AbstractSQL{
